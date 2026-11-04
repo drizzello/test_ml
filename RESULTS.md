@@ -14,6 +14,7 @@ uv run python phase4_audit.py             # fase 4: audit di Claude sui pesi (9 
 uv run python phase5_verify.py            # fase 5: verifica delle ipotesi
 uv run python phase6_correction.py        # fase 6: correzione dei pesi da parte di Claude (serve la chiave API)
 uv run python phase6b_choice.py           # fase 6b: correzione "a scelta", Opus 5.5 contro Fable 5.1 (serve la chiave API)
+uv run python phase6c_physiology.py       # fase 6c: come 6b + permesso di scrivere fisiologia nei pesi (serve la chiave API)
 uv run python phase7_shap.py              # fase 7: SHAP e confronto
 ```
 
@@ -536,6 +537,69 @@ miglioramento netto viene dall'aver scritto fisiologia nei pesi, non dalla scelt
 
 ---
 
+## Fase 6c: correzione "a scelta" + permesso esplicito di scrivere fisiologia nei pesi
+
+Motivazione: nella 6b un solo run (Fable rep2) aveva riscritto neuroni come regole fisiologiche, ed
+era l'unico sopra il riferimento. Qui il prompt della 6b ha in più un paragrafo che lo permette
+esplicitamente: "puoi riscrivere alcuni neuroni come regole fisiologiche note per la sepsi,
+scegliendo tu quali sacrificare". Il resto è identico: stesse 3 liste, 30 forward pass, effort `high`.
+L'LLM dichiara quali neuroni ha riscritto, e il dato si controlla sui pesi (neuroni con W2 modificato).
+Costo: 0,88 $ (Opus) e 3,55 $ (Fable). Script `phase6c_physiology.py`; dettagli e motivazioni in
+`results/phase6c.md`.
+
+Controllo aggiunto: un **punteggio da manuale** calcolato direttamente sulle feature, senza LLM né
+pesi (`results/phase6c_textbook_scores.json`). Usa le soglie cliniche classiche, convertite con la
+standardizzazione di A_train:
+- SIRS: FC > 90, FR > 20, T > 38 o < 36, GB > 12 o < 4;
+- SIRS + lattato > 2 + MAP < 65.
+
+| modello | lista | A AUROC | B AUROC | B AUPRC | neuroni riscritti | B senza i neuroni riscritti | **B solo neuroni riscritti** | A solo neuroni riscritti |
+|---|---|---|---|---|---|---|---|---|
+| originale | — | 0.9076 | 0.6627 | 0.0288 | — | — | — | — |
+| solo colonna bc azzerata | — | 0.7628 | 0.6888 | 0.0488 | — | — | — | — |
+| riaddestrato senza bc, seed 0 (media 3 seed) | — | 0.7689 | 0.7099 (0.724) | 0.0559 | — | — | — | — |
+| punteggio SIRS da manuale | — | 0.622 | 0.656 | 0.027 | — | — | — | — |
+| SIRS + lattato + MAP da manuale | — | 0.622 | 0.671 | 0.030 | — | — | — | — |
+| Opus 5.5 | rep0 | 0.6712 | 0.6755 | 0.0331 | 28, 27, 18, 4 | 0.657 | 0.644 | 0.637 |
+| Opus 5.5 | rep1 | 0.6359 | 0.5710 | 0.0251 | 1, 13, 18, 27 | 0.516 | 0.606 | 0.619 |
+| Opus 5.5 | rep2 | 0.6916 | 0.6351 | 0.0370 | 4, 18, 27, 13 | 0.585 | 0.664 | 0.646 |
+| Fable 5.1 | rep0 | 0.7051 | **0.7279** | 0.0456 | 1, 4, 13, 18, 27, 28 | 0.692 | **0.703** | 0.648 |
+| Fable 5.1 | rep1 | 0.6937 | 0.6619 | 0.0366 | 27, 18, 4, 13, 1 | 0.593 | 0.656 | 0.626 |
+| Fable 5.1 | rep2 | 0.6988 | **0.7334** | 0.0463 | 10 neuroni | 0.707 | **0.706** | 0.663 |
+
+Medie su B (AUROC): Opus 0,627, Fable 0,708 (6b: 0,647 e 0,665).
+
+Cosa si vede:
+1. **Quando glielo si chiede, entrambi scrivono fisiologia nei pesi, e scrivono regole simili.**
+   - Le regole: SIRS (FC, FR, temperatura, GB), ipotermia o leucopenia, shock (MAP/PAS bassa + lattato
+     alto), disfunzione d'organo stile SOFA (creatinina, bilirubina, piastrine, FiO2).
+   - I neuroni scelti da sacrificare sono quasi sempre gli stessi (4, 18, 27, 28, 13, 1). Entrambi
+     motivano la scelta allo stesso modo: senza l'emocoltura quei neuroni restano spenti.
+   - Il dato dichiarato combacia con quello misurato sui pesi.
+2. **Fable lo fa meglio di Opus, su due fronti separati:**
+   - **le regole valgono di più.** Da sole fanno 0,656-0,706 su B con Fable (media 0,688), contro
+     0,606-0,664 con Opus (media 0,638). In 2 run su 3 le regole di Fable battono il punteggio da
+     manuale (0,671); quelle di Opus mai. Fable usa soglie più fini e più neuroni (fino a 10, con
+     regole separate per febbre, ipotermia, leucocitosi e leucopenia);
+   - **il resto del modello è trattato meglio.** Fable attenua tempo e conteggi; Opus li rimuove (rep0
+     e rep1 tolgono ICULOS del tutto, rep1 anche i 26 conteggi di laboratorio). Senza i neuroni
+     riscritti, la parte rimanente fa su B 0,59-0,71 con Fable e 0,52-0,66 con Opus.
+3. **Fable rep0 e rep2 superano su B (0,728 e 0,733) sia l'originale (0,663) sia "solo bc rimossa"
+   (0,689), e anche il modello riaddestrato senza scorciatoia con lo stesso seed (0,710).**
+   - In media Fable (0,708) è al livello del riaddestrato seed 0, sotto la media dei 3 seed riaddestrati (0,724).
+   - Su A invece tutti i modelli corretti restano a 0,64-0,71, contro 0,77 del riaddestrato.
+   - Le regole scritte a mano funzionano più su B che su A: da sole 0,70 contro 0,65.
+4. **Opus rep1 è un fallimento:** B 0,571. Ha tolto ICULOS e 26 conteggi, e i neuroni sacrificati
+   portavano segnale: la parte rimanente da sola scende a 0,516.
+5. **Cautele.**
+   - 3 run per modello, un solo modello sotto audit.
+   - Una variabilità di ±0,02 su B è normale anche tra seed di addestramento.
+   - I neuroni riscritti sono "senza dati" solo in senso stretto: l'LLM usa conoscenza clinica generale
+     e sa che le feature sono standardizzate, ma non conosce medie e deviazioni standard, quindi le
+     soglie in unità z sono stimate.
+
+---
+
 ## Fase 7: confronto con SHAP
 
 Metodo (`phase7_shap.py`): `shap.DeepExplainer` sul modello `with_bc` seed 0 (uscita: logit),
@@ -585,6 +649,10 @@ Cosa trova SHAP e cosa no, rispetto all'LLM:
    Con un obiettivo posto bene (fase 6b) il danno sparisce quasi del tutto, ma né Opus 5.5 né
    Fable 5.1 separano le scorciatoie meglio di così. L'unico miglioramento netto su B (0,696) viene da
    un run di Fable che ha scritto a mano regole fisiologiche in 5 neuroni.
+   Quando lo si chiede esplicitamente (fase 6c), entrambi i modelli lo fanno. Le regole di Fable
+   valgono di più: da sole 0,69 su B in media, contro 0,64 per Opus e 0,67 per il punteggio SIRS +
+   lattato + MAP da manuale. Due run di Fable su tre superano su B (0,728 e 0,733) il modello
+   riaddestrato senza scorciatoia con lo stesso seed (0,710).
 3. **I forward pass non servono** su questo modello: la condizione A è la migliore.
 4. **SHAP, con i nomi delle feature davanti, arriva alle stesse conclusioni.** Il vantaggio dell'LLM
    è non avere bisogno di dati e proporre e motivare interventi, non vedere qualcosa che SHAP non vede.
