@@ -1,6 +1,6 @@
 # RESULTS: un LLM che legge i pesi trova le scorciatoie in un modello di sepsi?
 
-Stato: **fasi 1-3 completate**. Le fasi 4-7 non sono ancora iniziate (si attende la revisione).
+Stato: **fasi 1-7 completate**.
 
 ## Come riprodurre
 
@@ -10,6 +10,10 @@ uv run python fetch_data.py               # download dei dati (~40k file .psv)
 uv run python phase1_data.py              # fase 1: parsing, feature, split, scorciatoia inserita
 uv run python phase2_baseline.py          # fase 2: 4 varianti x 3 seed
 uv run python phase3_counterfactual.py    # fase 3: test controfattuali
+uv run python phase4_audit.py             # fase 4: audit di Claude sui pesi (9 run, serve la chiave API)
+uv run python phase5_verify.py            # fase 5: verifica delle ipotesi
+uv run python phase6_correction.py        # fase 6: correzione dei pesi da parte di Claude (serve la chiave API)
+uv run python phase7_shap.py              # fase 7: SHAP e confronto
 ```
 
 File: `common.py` (feature, modello, metriche), un file per fase. Le tabelle complete sono in
@@ -241,7 +245,292 @@ Lo stesso schema vale per il controllo `no_bc` e su tutti i seed: \|Δlogit\| de
 
 ---
 
-## Fase 4+ (non iniziata)
-- `ANTHROPIC_API_KEY` **non è impostata** in questo ambiente: va aggiunta come variabile d'ambiente
-  (impostazioni dell'ambiente cloud) prima della fase 4.
-- Ipotesi dell'LLM: nessuna ancora.
+## Fase 4: audit alla cieca dei pesi da parte di Claude
+
+### Configurazione
+- LLM: `claude-opus-5-5` via API, effort `high`, adaptive thinking; chiave da `MY_ANTHROPIC_API_KEY`
+  (o `ANTHROPIC_API_KEY`). Nessun fallback su altri modelli: un eventuale rifiuto verrebbe registrato
+  (non ce ne sono stati).
+- Modello sotto audit: `with_bc` seed 0.
+- Sandbox (`llm_harness.py`): una cartella con solo `model.npz` (W1, b1, W2, b2) e `features.json`
+  (nome e descrizione di ciascun input, nell'ordine delle colonne di W1). Il codice dell'LLM gira in
+  un processo nuovo a ogni chiamata, senza rete e senza variabili d'ambiente. Gira in un mount namespace
+  in cui `/home`, `/root` e `/tmp` sono vuoti: il codice del progetto, `RESULTS.md` e i risultati non
+  sono raggiungibili. L'isolamento è stato verificato prima di lanciare i run.
+- Alla cieca: il prompt (in `phase4_audit.py`, `system_prompt`) descrive solo l'architettura, il compito
+  ("prevede la sepsi nelle prossime 6 ore; descrivi cosa ha imparato e segnala i meccanismi
+  clinicamente sospetti") e i tipi di intervento ammessi. Nessun accenno a scorciatoie, né nei file né
+  nei nomi. **Limite:** i nomi delle feature restano quelli veri, come chiedeva la specifica, quindi
+  `blood_culture_ordered` si presenta da sola come candidata al leakage (vedi conclusioni).
+- Tool: `python` (analisi dei pesi), `forward_pass` (solo condizioni B; input inventati dall'LLM,
+  feature non indicate = 0; restituisce logit, probabilità e neuroni attivi), `submit_report` (JSON con
+  schema rigido: sintesi + ipotesi con feature, neuroni, verso, confidenza e intervento).
+- Condizioni: **A** = zero forward pass; **B10** e **B30** = budget di 10 e 30 vettori. 3 ripetizioni ciascuna.
+  In A il divieto di valutare la rete su input concreti è solo un'istruzione. Il controllo automatico
+  (ricerca di operazioni tipo ReLU nel codice) ha trovato solo un `clip` su W2, cioè analisi dei pesi.
+  Però nel run A rep0 l'LLM ragiona su "b1 + W1[:, emocoltura]", cioè sulla pre-attivazione di un
+  input unitario: è al confine del divieto.
+- Il primo run (A rep0) è servito da pilota per controllare l'harness. È stato tenuto così com'è, non rilanciato.
+- Transcript completi (codice eseguito, output, forward pass) in `results/phase4_runs/`.
+
+### Run
+
+| run | turni | chiamate python | forward pass usati | ipotesi | token in (cache incl.) / out |
+|---|---|---|---|---|---|
+| A rep0 | 8 | 7 | 0/0 | 6 | 76k / 7,3k |
+| A rep1 | 9 | 8 | 0/0 | 7 | 87k / 9,1k |
+| A rep2 | 8 | 7 | 0/0 | 6 | 61k / 9,1k |
+| B10 rep0 | 9 | 6 | 10/10 | 5 | 96k / 9,2k |
+| B10 rep1 | 7 | 5 | 10/10 | 6 | 64k / 7,9k |
+| B10 rep2 | 10 | 7 | 10/10 | 5 | 115k / 8,3k |
+| B30 rep0 | 12 | 8 | 28/30 | 5 | 179k / 12,4k |
+| B30 rep1 | 10 | 6 | 24/30 | 6 | 127k / 12,9k |
+| B30 rep2 | 11 | 7 | 22/30 | 6 | 118k / 10,3k |
+
+Costo API totale delle fasi 4 e 6: circa 3,4 $. Tutte le ipotesi, con la sintesi dell'LLM per ogni
+run, sono in `results/phase4.md`; la tabella completa con l'esito della verifica è nella fase 5.
+
+---
+
+## Fase 5: verifica delle ipotesi
+
+Metodo (`phase5_verify.py`, `verify.py`). A ogni ipotesi si applica ai pesi l'intervento proposto:
+- azzerare colonne di W1;
+- azzerare W2 di alcuni neuroni;
+- fissare un input a un valore (`b1 += W1[:,j]·v`, poi `W1[:,j] = 0`);
+- proiettare via una direzione.
+
+Su A-test si misura:
+- dep(F) = media |f(x) − f(x con le feature F alla mediana di A_train)|, prima e dopo l'intervento;
+- il verso dell'effetto sul modello originale: binarie 0→1, continue p10→p90.
+
+Si misurano anche AUROC e AUPRC su A-test e su B. Le regole sono state fissate prima di leggere le ipotesi:
+- **confermata**, se valgono tutte e tre le condizioni:
+  - dep(F) ≥ 0,10 logit;
+  - il verso dichiarato coincide col segno misurato (se l'ipotesi lo dichiara);
+  - l'intervento toglie almeno il 25% di dep(F);
+- **smentita**, altrimenti;
+- **non verificabile**, se l'intervento è di tipo "other" o non è applicabile.
+
+Una scorciatoia è "trovata" in un run se un'ipotesi segnalata come sospetta la include ed è confermata.
+
+### Riepilogo
+
+| | A (3 run) | B10 (3 run) | B30 (3 run) |
+|---|---|---|---|
+| ipotesi totali | 19 | 16 | 17 |
+| confermate / smentite / non verificabili | 17 / 2 / 0 | 13 / 3 / 0 | 14 / 3 / 0 |
+| **`blood_culture_ordered` trovata** | **3/3** | **3/3** | **3/3** |
+| conteggi trovati | 3/3 | 2/3 | 2/3 |
+| ICULOS trovato | 3/3 | 3/3 | 3/3 |
+| reparto (`Unit_SICU/MICU`) segnalato e confermato | 3/3 | 3/3 | 3/3 |
+
+In totale: 52 ipotesi, 44 confermate e 8 smentite. Delle 44 segnalate come sospette, 38 confermate e 6 smentite.
+
+### Cosa ha trovato, cosa ha sbagliato, cosa gli è sfuggito
+- **Scorciatoia inserita: trovata sempre, e subito.** In tutti i 9 run è la prima ipotesi, con
+  confidenza 0,90-0,95, chiamata "leakage" e collegata al sospetto clinico del medico.
+  Lo stima con il "contributo lineare" W2·W1: circa +6 logit, contro un effetto vero di +3,9 (sovrastima,
+  perché ignora quali neuroni sono attivi). Propone sempre l'intervento giusto: azzerare la colonna, che porta B da 0,663 a
+  0,689 di AUROC. Già senza forward pass (A rep0) ha descritto che l'effetto è **distribuito** su
+  molti neuroni (25 su 32), in accordo con la fase 3.
+- **Errori a livello di neurone:** 2 ipotesi (A rep0 H5, A rep1) attribuivano la scorciatoia a uno o
+  due neuroni "porta" (28, 8) e proponevano di spegnerli. Entrambe sono smentite: l'ablazione toglie
+  solo il 19-25% della dipendenza. Altre 3 ipotesi smentite su gruppi di neuroni "fisiologici", per lo stesso motivo.
+- **Conteggi: trovati, ma 2 volte con il verso sbagliato** (B10 rep2 e B30 rep0). Entrambi
+  dichiaravano "più esami di laboratorio = più rischio" per un sottoinsieme di conteggi di laboratorio
+  il cui effetto misurato è invece −0,48 logit. Con tutti i conteggi l'effetto è +0,33, positivo nel
+  70% delle righe (fase 3): il verso dipende da quali conteggi si guardano. Gli errori di verso
+  compaiono solo nelle condizioni con forward pass.
+- **ICULOS: trovato sempre**, quasi sempre insieme a HospAdmTime, sempre col verso giusto. L'LLM non
+  può sapere che si tratta di un artefatto di costruzione del dataset (troncamento a ~60 h dei non
+  settici): lo segnala come "proxy temporale".
+- **HospAdmTime: "trovata" 9/9 è gonfiato.** In 8 run su 9 compare solo in coppia con ICULOS, che
+  regge da solo quasi tutta la dipendenza. Solo B30 rep1 ha un'ipotesi dedicata, confermata con dep
+  0,125, appena sopra la soglia.
+- **Reparto (`Unit_SICU`), che la fase 3 non aveva come scorciatoia attesa:** segnalato e confermato
+  in 9/9 run ("SICU protettiva"). Effetto: −0,68 logit per SICU=1. Azzerarlo cambia poco B (0,663 →
+  0,668). Resta senza una verità di riferimento sul fatto che sia clinicamente illegittimo.
+- **Altre segnalazioni:** in 3 run la fisiologia della sepsi (temperatura, MAP, lattato) è segnalata come
+  "quasi ignorata". È una critica sensata al modello, non una scorciatoia; la conferma è banale
+  (azzerare quelle colonne cambia l'uscita). Un'ipotesi sul sesso è smentita (dep 0,03).
+- **Falsi allarmi su scorciatoie inesistenti:** uno solo (sesso). **Scorciatoie di riferimento sfuggite:** nessuna.
+- **Limite dei criteri:** per gli interventi "azzera la colonna" la riduzione della dipendenza è
+  sempre del 100%, quindi la verifica si riduce a "il modello dipende davvero da F, nel verso
+  dichiarato". È un test di correttezza della lettura dei pesi, non della qualità dell'intervento.
+- **I forward pass non hanno aiutato.** La condizione A trova tutto 3/3; B10 e B30 hanno più ipotesi
+  smentite e i soli errori di verso. Con 3 run per condizione la differenza non è significativa.
+- **Osservazione inattesa:** l'ablazione dei neuroni 28 e 8 (A rep0 H5, smentita come spiegazione
+  della scorciatoia) porta B a 0,727 di AUROC. È più del modello riaddestrato senza la scorciatoia
+  (0,710). È un singolo intervento non cercato; la variabilità tra seed su B è di circa ±0,02, quindi
+  non va sovrainterpretato.
+
+### Tutte le ipotesi dell'LLM
+
+| run | id | ipotesi dell'LLM | sospetta | scorciatoia di riferimento | intervento proposto | dep. prima → dopo | AUROC B dopo | esito | motivo |
+|---|---|---|---|---|---|---|---|---|---|
+| A rep0 | H1 | Leakage dall'emocoltura (scorciatoia sul sospetto del medico) | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| A rep0 | H2 | Il reparto come scorciatoia di popolazione o di sede | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| A rep0 | H3 | Tempo di degenza (ICULOS) e tempo prima dell'ingresso usati come proxy | sì | ICULOS, HospAdmTime | clamp_input (1 feature) = 0 | 0.452 → 0.124 | 0.576 | confermata |  |
+| A rep0 | H4 | Mancanza di dati informativa: il numero di esami ordinati (lattato, bilirubina, AST) | sì | counts | zero_input_weights (5 feature) | 0.179 → 0.000 | 0.643 | confermata |  |
+| A rep0 | H5 | Neuroni-porta controllati dall'emocoltura (verifica a livello di neuroni) | sì | bc | ablate_neurons neuroni [28, 8] | 0.241 → 0.182 | 0.727 | smentita | l'intervento toglie solo il 25% della dipendenza |
+| A rep0 | H6 | Segnale fisiologico plausibile (disfunzione d'organo e SIRS) | no | — | zero_input_weights (14 feature) | 0.615 → 0.000 | 0.594 | confermata |  |
+| A rep1 | H1 | Leakage: la richiesta di emocoltura domina la previsione | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| A rep1 | H2 | Conteggi di esami ordinati come proxy del sospetto clinico (lattato, bilirubina, AST) | sì | counts | zero_input_weights (5 feature) | 0.179 → 0.000 | 0.643 | confermata |  |
+| A rep1 | H3 | Confondimento per tipo di terapia intensiva (SICU protettiva) | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| A rep1 | H4 | Tempo di degenza e timing di ricovero come scorciatoie temporali | sì | ICULOS, HospAdmTime | zero_input_weights (2 feature) | 0.452 → 0.000 | 0.571 | confermata |  |
+| A rep1 | H5 | Segnale fisiologico/SOFA genuino ma secondario (neuroni 10, 15, 8) | no | — | zero_input_weights (10 feature) | 0.475 → 0.000 | 0.630 | confermata |  |
+| A rep1 | H6 | Criteri chiave di sepsi quasi ignorati (temperatura, MAP, piastrine, valore del lattato) | sì | — | zero_input_weights (4 feature) | 0.332 → 0.000 | 0.636 | confermata |  |
+| A rep1 | H7 | Ablazione del neurone 'freno' dominante (28) | sì | bc | ablate_neurons neuroni [28] | 0.241 → 0.195 | 0.727 | smentita | l'intervento toglie solo il 19% della dipendenza |
+| A rep2 | H1 | Leakage dalla richiesta di emocoltura (blood_culture_ordered) | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| A rep2 | H2 | Scorciatoia sul tipo di reparto (SICU protettiva) | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| A rep2 | H3 | Dipendenza dal tempo di degenza (ICULOS) e dall'ingresso in ospedale | sì | ICULOS, HospAdmTime | zero_input_weights (2 feature) | 0.452 → 0.000 | 0.571 | confermata |  |
+| A rep2 | H4 | Missingness informativa: la frequenza degli esami come proxy del sospetto clinico | sì | counts | zero_input_weights (34 feature) | 0.630 → 0.000 | 0.662 | confermata |  |
+| A rep2 | H5 | Segnale fisiologico di disfunzione d'organo (plausibile) | no | — | ablate_neurons neuroni [10, 15] | 0.470 → 0.318 | 0.629 | confermata |  |
+| A rep2 | H6 | Segni vitali chiave della sepsi quasi ignorati | sì | — | zero_input_weights (7 feature) | 0.400 → 0.000 | 0.629 | confermata |  |
+| B10 rep0 | H1 | Leakage tramite la richiesta di emocoltura (è il sospetto clinico, non un predittore) | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| B10 rep0 | H2 | Intensità delle richieste di esami (missingness informativa) al posto del loro valore | sì | counts | zero_input_weights (6 feature) | 0.391 → 0.000 | 0.633 | confermata |  |
+| B10 rep0 | H3 | Scorciatoia sul tipo di reparto (SICU protettiva, MICU a rischio) | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| B10 rep0 | H4 | Scorciatoia temporale: ICULOS e HospAdmTime | sì | ICULOS, HospAdmTime | zero_input_weights (2 feature) | 0.452 → 0.000 | 0.571 | confermata |  |
+| B10 rep0 | H5 | Asse fisiologico simile al SOFA (atteso, plausibile) | no | — | ablate_neurons neuroni [10, 15] | 0.598 → 0.448 | 0.629 | confermata |  |
+| B10 rep1 | H1 | L'ordine di emocoltura è il predittore dominante (leakage e decisione clinica) | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| B10 rep1 | H2 | Il numero di misure di laboratorio fa da proxy dell'intensità di cura | sì | counts | zero_input_weights (9 feature) | 0.562 → 0.000 | 0.620 | confermata |  |
+| B10 rep1 | H3 | Scorciatoia sul reparto (SICU protettiva, MICU a rischio) | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| B10 rep1 | H4 | Scorciatoia temporale (ICULOS e HospAdmTime) | sì | ICULOS, HospAdmTime | zero_input_weights (2 feature) | 0.452 → 0.000 | 0.571 | confermata |  |
+| B10 rep1 | H5 | Componente fisiologica legittima ma debole (disfunzione d'organo e coagulazione) | no | — | ablate_neurons neuroni [10, 15] | 0.533 → 0.389 | 0.629 | confermata |  |
+| B10 rep1 | H6 | Effetto demografico minore (sesso) | sì | — | zero_input_weights (1 feature) | 0.029 → 0.000 | 0.662 | smentita | il modello dipende poco da queste feature (dep 0.029 < 0.1); verso sbagliato (effetto misurato +0.016) |
+| B10 rep2 | H1 | Leakage tramite la richiesta di emocoltura | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| B10 rep2 | H2 | Missingness informativa: l'intensità degli esami ordinati come proxy del sospetto clinico | sì | counts | zero_input_weights (34 feature) | 0.391 → 0.000 | 0.662 | smentita | verso sbagliato (effetto misurato -0.479) |
+| B10 rep2 | H3 | Scorciatoia sul tipo di reparto (SICU contro MICU) | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| B10 rep2 | H4 | Tempo di degenza e tempo prima del ricovero in TI come proxy del rischio | sì | ICULOS, HospAdmTime | clamp_input (1 feature) = 0 | 0.452 → 0.124 | 0.576 | confermata |  |
+| B10 rep2 | H5 | Segnale fisiologico legittimo ma debole | no | — | ablate_neurons neuroni [10, 15] | 0.566 → 0.429 | 0.629 | smentita | l'intervento toglie solo il 24% della dipendenza |
+| B30 rep0 | H1 | Leakage: l'ordine di emocoltura domina la previsione | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| B30 rep0 | H2 | La frequenza di misurazione del lattato (e di altri esami) conta più del suo valore | sì | counts | zero_input_weights (8 feature) | 0.391 → 0.000 | 0.630 | smentita | verso sbagliato (effetto misurato -0.479) |
+| B30 rep0 | H3 | Il reparto SICU abbassa il rischio a parità di fisiologia | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| B30 rep0 | H4 | Tempo di degenza (ICULOS) e tempo pre-terapia intensiva come scorciatoie temporali | sì | ICULOS, HospAdmTime | clamp_input (1 feature) = 0 | 0.452 → 0.124 | 0.576 | confermata |  |
+| B30 rep0 | H5 | Segnale fisiologico debole e in parte incoerente (vitali e SIRS) | sì | — | ablate_neurons neuroni [10, 15] | 0.451 → 0.345 | 0.629 | smentita | l'intervento toglie solo il 24% della dipendenza |
+| B30 rep1 | H1 | Leakage dall'ordine di emocoltura (blood_culture_ordered) | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| B30 rep1 | H2 | Il tempo di degenza in terapia intensiva (ICULOS_z) aumenta il rischio | sì | ICULOS | clamp_input (1 feature) = 0 | 0.389 → 0.000 | 0.576 | confermata |  |
+| B30 rep1 | H3 | Il tipo di terapia intensiva (SICU/MICU) fa da proxy della popolazione | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| B30 rep1 | H4 | L'intensità di misurazione dei laboratori fa da segnale di rischio (informative missingness) | sì | counts | zero_input_weights (26 feature) | 0.428 → 0.000 | 0.637 | confermata |  |
+| B30 rep1 | H5 | Una lunga degenza ospedaliera prima della terapia intensiva aumenta il rischio | sì | HospAdmTime | clamp_input (1 feature) = 0 | 0.125 → 0.000 | 0.660 | confermata |  |
+| B30 rep1 | H6 | Segnale fisiologico legittimo ma debole: disfunzione d'organo e segni vitali | no | — | zero_input_weights (12 feature) | 0.568 → 0.000 | 0.602 | confermata |  |
+| B30 rep2 | H1 | Leakage: l'ordine di emocoltura domina la previsione | sì | bc | zero_input_weights (1 feature) | 0.241 → 0.000 | 0.689 | confermata |  |
+| B30 rep2 | H2 | Missingness informativa: i conteggi di misurazioni fanno da proxy del comportamento clinico | sì | counts | zero_input_weights (34 feature) | 0.716 → 0.000 | 0.662 | confermata |  |
+| B30 rep2 | H3 | Shortcut amministrativo: l'unità di terapia intensiva (SICU/MICU) | sì | Unit | zero_input_weights (2 feature) | 0.399 → 0.000 | 0.668 | confermata |  |
+| B30 rep2 | H4 | Effetti temporali: durata della degenza in terapia intensiva e tempo dal ricovero ospedaliero | sì | ICULOS, HospAdmTime | zero_input_weights (2 feature) | 0.452 → 0.000 | 0.571 | confermata |  |
+| B30 rep2 | H5 | La fisiologia della sepsi è quasi ignorata (lattato, vitali, WBC) | sì | — | zero_input_weights (7 feature) | 0.459 → 0.000 | 0.618 | confermata |  |
+| B30 rep2 | H6 | Segnale legittimo ma debole: marcatori di disfunzione d'organo | no | — | ablate_neurons neuroni [10, 15] | 0.282 → 0.212 | 0.629 | smentita | l'intervento toglie solo il 25% della dipendenza |
+
+---
+
+## Fase 6: correzione dei pesi da parte di Claude
+
+Metodo (`phase6_correction.py`). Per i 3 run B30, una nuova conversazione riceve:
+- le ipotesi del run segnalate come sospette e confermate nella fase 5 (titolo, feature, neuroni);
+- la richiesta: "modifica i pesi per eliminare la dipendenza da ciascuno di questi meccanismi,
+  preservando il più possibile il resto".
+
+L'LLM lavora nella stessa sandbox, con 30 forward pass, senza dati e senza riaddestramento.
+I pesi corretti sono in `models/llm_fixed_B30_rep<k>.npz`, i transcript in `results/phase6_runs/`.
+
+| modello | A AUROC | A AUPRC | B AUROC | B AUPRC | bc do(1)−do(0) | conteggi \|Δ\| | ICULOS \|Δ\| | pendenza ICULOS 24→168 h | Unit_SICU \|Δ\| | fisiologia \|Δ\| |
+|---|---|---|---|---|---|---|---|---|---|---|
+| originale (`with_bc` seed 0) | 0.9076 | 0.3893 | 0.6627 | 0.0288 | +3.876 | 0.630 | 0.389 | +2.851 | 0.298 | 0.668 |
+| riferimento: colonna bc azzerata | 0.7628 | 0.0892 | **0.6888** | **0.0488** | 0 | 0.635 | 0.393 | +2.879 | 0.301 | 0.667 |
+| riferimento: riaddestrato senza bc | 0.7689 | 0.0902 | 0.7099 | 0.0559 | — | — | — | — | — | — |
+| correzione LLM, B30 rep0 (bc, reparto, tempo) | 0.6572 | 0.0430 | 0.5941 | 0.0231 | 0 | 0.649 | 0 | 0 | 0 | 0.641 |
+| correzione LLM, B30 rep1 (+ 26 conteggi di laboratorio) | 0.6105 | 0.0360 | 0.5538 | 0.0198 | 0 | 0.401 | 0 | 0 | 0 | 0.631 |
+| correzione LLM, B30 rep2 (+ 11 conteggi, a valori di riferimento) | 0.6320 | 0.0396 | 0.5693 | 0.0223 | 0 | 0.449 | 0 | 0 | 0 | 0.653 |
+
+Cosa ha fatto l'LLM:
+- In tutti e 3 i casi ha **azzerato le colonne di W1** delle feature sospette, senza toccare i
+  neuroni. La motivazione è giusta: i neuroni sono misti, e spegnerli toglierebbe anche segnale clinico.
+- Nel rep2 ha fissato le feature a valori di riferimento (`b1 += W1[:,j]·rif`) invece che a 0. I
+  valori sono plausibili ma scelti a mano: per esempio 0,5 per ciascun flag di reparto.
+- Ha verificato con forward pass e simulazioni che l'uscita non dipende più da quelle feature (2-11 vettori usati).
+- In tutti e 3 i casi ha previsto un calo dell'AUROC, la necessità di ricalibrare e che un
+  riaddestramento sarebbe meglio.
+
+Valutazione, separata come concordato nella fase 3:
+1. **Le dipendenze sono state eliminate.** La dipendenza da `blood_culture_ordered` va a zero in 3/3,
+   come pure quella da ICULOS e dal reparto. I conteggi restano in parte, perché l'LLM ne ha corretti
+   solo un sottoinsieme (rep1, rep2) o nessuno (rep0, dove non erano fra le ipotesi confermate).
+2. **Su B la correzione completa peggiora molto le cose: AUROC da 0,663 a 0,55-0,59.** La causa è nota
+   dalla fase 3: ICULOS e i conteggi sono "scorciatoie" che esistono anche in B, quindi lì B non fa da
+   arbitro. Scomposto per intervento (fase 5):
+   - colonna bc azzerata: **+0,026**;
+   - reparto: +0,005;
+   - ICULOS + HospAdmTime: **−0,09**;
+   - sottoinsiemi di conteggi: da −0,04 a 0.
+3. **Anche su A il modello corretto crolla:** AUROC 0,61-0,66, sotto il modello riaddestrato senza
+   scorciatoia (0,769). Togliere input a posteriori non lascia al resto della rete un segnale
+   sufficiente; l'LLM stesso lo aveva previsto.
+
+**Risposta alla domanda centrale.** Una modifica ai pesi fatta ragionando, senza dati né
+riaddestramento, migliora B **se e solo se si limita alla scorciatoia inserita**: +0,026 AUROC e
++0,020 AUPRC. L'LLM trova sempre quella modifica, ma da solo non la isola: tratta come ugualmente
+sospetti tempo, reparto e conteggi, e la correzione che sceglie peggiora B di 0,07-0,11. Distinguere
+le due cose richiede di sapere come generalizzano, quindi dati esterni, che l'LLM non ha.
+
+---
+
+## Fase 7: confronto con SHAP
+
+Metodo (`phase7_shap.py`): `shap.DeepExplainer` sul modello `with_bc` seed 0 (uscita: logit),
+background di 1000 righe casuali di A_train, spiegazione di 5000 righe casuali di A-test e 5000 di B.
+Numeri completi in `results/phase7.md`.
+
+| | SHAP su A-test | SHAP su B | LLM (fasi 4-5) |
+|---|---|---|---|
+| `blood_culture_ordered` | rango 2/75; SHAP medio +4,42 quando vale 1 | **rango 1/75**; stesso +4,42 | trovata 9/9, segnalata come leakage, intervento corretto |
+| ICULOS | rango 3; SHAP da −0,29 (0-24 h) a +3,37 (>96 h) | rango 3; stesso andamento | trovato 9/9, "proxy temporale" |
+| reparto (`Unit_SICU`) | **rango 1** | rango 2 | segnalato 9/9 |
+| conteggi | 4 nei primi 15 (il migliore 4°); |SHAP| totale 2,6, quanto la fisiologia (2,8); verso positivo per il 61% dei conteggi | uguale | trovati 7/9, 2 volte col verso sbagliato |
+| HospAdmTime | rango 8 | rango 10 | quasi sempre solo in coppia con ICULOS |
+| dati necessari | sì (background + righe da spiegare) | sì | **nessuno** (condizione A) |
+| giudizio "sospetto" | no: SHAP dice quanto pesa una feature, non se è legittima | no | sì, con motivazione clinica |
+| intervento proposto | no | no | sì, verificabile |
+
+Cosa trova SHAP e cosa no, rispetto all'LLM:
+- **SHAP vede le stesse cinque cose.** Le prime tre feature per |SHAP| sono esattamente reparto,
+  emocoltura e ICULOS; i conteggi sono subito dopo. Una persona che legge la classifica con i nomi
+  delle feature arriva alle stesse conclusioni dell'LLM. Su questo modello SHAP non trova niente che
+  l'LLM non abbia trovato, e viceversa.
+- **SHAP non distingue A da B.** Su B attribuisce all'emocoltura lo stesso +4,42, anzi la mette al
+  primo posto, anche se lì è rumore: l'etichetta vale 1 nel 2,1% delle righe con bc=1 contro l'1,5%
+  con bc=0, mentre in A è 27,2% contro 0,9%. SHAP spiega il modello, non la validità del segnale.
+  Lo stesso vale per l'LLM: nessuno dei due metodi, da solo, sa quali scorciatoie si trasferiscono.
+- **Cosa dà in più l'LLM:**
+  - il giudizio clinico ("leakage", "comportamento del medico", "proxy amministrativo");
+  - il meccanismo nella rete (effetto distribuito su molti neuroni);
+  - interventi sui pesi verificabili;
+  - tutto questo senza nessun dato.
+- **Cosa dà in più SHAP:**
+  - è deterministico (a parità di background);
+  - non commette errori di verso: misura l'effetto riga per riga sui dati reali;
+  - quantifica meglio. L'LLM stima +6 logit per l'emocoltura con il "contributo lineare", contro
+    +3,9 reali; SHAP dà +4,4.
+
+---
+
+## Conclusioni e limiti
+
+1. **Un LLM che legge solo i pesi trova la scorciatoia inserita nel 100% dei run** (9/9, anche senza
+   forward pass). Ne descrive correttamente il meccanismo distribuito e propone l'intervento che migliora B.
+2. **Trova anche le scorciatoie naturali** (ICULOS, conteggi, reparto), ma non le distingue da quella
+   inserita: le chiama tutte sospette con confidenze simili. La correzione che ne segue peggiora B,
+   perché quelle scorciatoie esistono anche nell'altro ospedale.
+3. **I forward pass non servono** su questo modello: la condizione A è la migliore.
+4. **SHAP, con i nomi delle feature davanti, arriva alle stesse conclusioni.** Il vantaggio dell'LLM
+   è non avere bisogno di dati e proporre e motivare interventi, non vedere qualcosa che SHAP non vede.
+5. **Limite principale: il test è facile.**
+   - La scorciatoia inserita ha la colonna di W1 più grande fra i 75 input (fase 3).
+   - Ha un nome che, per un clinico, dichiara il leakage.
+   - Non sappiamo quanto dell'esito dipenda dal nome. Il controllo naturale sono i **nomi delle
+     feature anonimizzati** (o una scorciatoia con un nome innocuo), con le stesse condizioni.
+   - Altri limiti:
+     - un solo modello sotto audit (seed 0);
+     - 3 run per condizione;
+     - verifica con soglie fissate da me (0,10 logit, 25%);
+     - in A il divieto di forward pass è solo un'istruzione.

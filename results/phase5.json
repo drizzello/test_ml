@@ -1,0 +1,3399 @@
+{
+ "base": {
+  "A_test": {
+   "auroc": 0.9075721014622172,
+   "auprc": 0.38927322396398417,
+   "prevalence": 0.021868597533817747
+  },
+  "B_test": {
+   "auroc": 0.6627193283923952,
+   "auprc": 0.028807033271873353,
+   "prevalence": 0.014147074455869133
+  },
+  "dep": {
+   "bc_paired_do1_minus_do0": 3.876012392791782,
+   "counts_abs_dlogit_to_median": 0.6302194696970217,
+   "ICULOS_abs_dlogit_to_median": 0.38933217313523716,
+   "ICULOS_slope_168h_minus_24h": 2.8514574161913298,
+   "HospAdmTime_abs_dlogit_to_median": 0.12491915177056084,
+   "Unit_SICU_abs_dlogit_to_median": 0.2975954525043056,
+   "physiology_last_abs_dlogit_to_median": 0.6675258625592702
+  }
+ },
+ "rules": {
+  "dep_min": 0.1,
+  "reduction_min": 0.25
+ },
+ "runs": [
+  {
+   "cond": "A",
+   "rep": 0,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage dall'emocoltura (scorciatoia sul sospetto del medico)",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      10,
+      5,
+      31,
+      16,
+      14,
+      23,
+      21,
+      20,
+      12,
+      0,
+      6,
+      7,
+      11,
+      17,
+      24,
+      25,
+      29,
+      4,
+      18,
+      19,
+      22,
+      27
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.9,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerare la colonna di W1 elimina la scorciatoia e mostra quanto della performance dipende dall'emocoltura."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Il reparto come scorciatoia di popolazione o di sede",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      29,
+      31,
+      0,
+      28,
+      8
+     ],
+     "claimed_direction": "decreases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuovere l'informazione sul reparto e vedere quanto cambiano la discriminazione e la calibrazione per sottogruppo."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H3",
+     "title": "Tempo di degenza (ICULOS) e tempo prima dell'ingresso usati come proxy",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      19,
+      22,
+      31,
+      29,
+      20
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.55,
+     "intervention": {
+      "type": "clamp_input",
+      "features": [
+       "ICULOS_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Fissare ICULOS_z alla media (z=0) elimina la dipendenza dal tempo trascorso in reparto."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.410753926945946,
+     "after_A_test": {
+      "auroc": 0.886428557243344,
+      "auprc": 0.2975035434357585,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.5761580604911695,
+      "auprc": 0.018436220997393494,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.1239074057898503,
+     "reduction": 0.7256471662055981,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Mancanza di dati informativa: il numero di esami ordinati (lattato, bilirubina, AST)",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      7,
+      14,
+      16,
+      8,
+      30
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Lactate_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "AST_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "Fibrinogen_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuovere i conteggi degli esami pi\u00f9 legati alla sepsi e vedere quanto il modello dipende dal comportamento di chi li ordina."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.17883543221946102,
+     "after_A_test": {
+      "auroc": 0.9024536938297193,
+      "auprc": 0.37960956612768104,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6433626425005963,
+      "auprc": 0.02690103273325628,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.17883543221946102,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.7523008099551785,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Neuroni-porta controllati dall'emocoltura (verifica a livello di neuroni)",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      5,
+      31,
+      16,
+      10
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       28,
+       8
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "28 e 8 sono i freni pi\u00f9 grandi e quelli pi\u00f9 puramente controllati dall'emocoltura; senza di loro l'emocoltura non pu\u00f2 pi\u00f9 'togliere il freno'."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 1.0641535417404722,
+     "after_A_test": {
+      "auroc": 0.8962308190908208,
+      "auprc": 0.3155502365523701,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.7273231336786663,
+      "auprc": 0.05238161762633418,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.18171949407262766,
+     "reduction": 0.24720857052311618,
+     "measured_effect": 3.876012392791782,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 25% della dipendenza"
+    },
+    {
+     "id": "H6",
+     "title": "Segnale fisiologico plausibile (disfunzione d'organo e SIRS)",
+     "suspicious": false,
+     "features": [
+      "HR_last_z",
+      "Temp_last_z",
+      "Resp_last_z",
+      "WBC_last_z",
+      "Creatinine_last_z",
+      "BUN_last_z",
+      "Bilirubin_direct_last_z",
+      "PTT_last_z",
+      "TroponinI_last_z",
+      "SaO2_last_z",
+      "MAP_last_z",
+      "Lactate_last_z",
+      "FiO2_last_z",
+      "pH_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15,
+      16,
+      24,
+      7,
+      30,
+      19,
+      22
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "HR_last_z",
+       "Temp_last_z",
+       "Resp_last_z",
+       "WBC_last_z",
+       "Creatinine_last_z",
+       "BUN_last_z",
+       "Bilirubin_direct_last_z",
+       "PTT_last_z",
+       "TroponinI_last_z",
+       "SaO2_last_z",
+       "MAP_last_z",
+       "Lactate_last_z",
+       "FiO2_last_z",
+       "pH_last_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Controllo: misurare quanta performance viene davvero dalla fisiologia."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7864126294422802,
+     "after_A_test": {
+      "auroc": 0.8943216256415222,
+      "auprc": 0.3669785130591452,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.5938304327941117,
+      "auprc": 0.02090902491285322,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.6150853315197942,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 2.605577281422363,
+     "verdict": "confermata",
+     "reason": ""
+    }
+   ],
+   "counts": {
+    "confermata": 5,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 4,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "trovata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "A",
+   "rep": 1,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage: la richiesta di emocoltura domina la previsione",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      10,
+      5,
+      31,
+      23,
+      16,
+      14,
+      11,
+      12,
+      20,
+      21,
+      24,
+      25,
+      29,
+      0,
+      6,
+      7,
+      17,
+      27,
+      18,
+      4,
+      22,
+      19
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.92,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerare la colonna di W1 elimina la lettura dell'emocoltura da parte di tutti i neuroni. Equivale a clamp_input a 0, cio\u00e8 a una coltura mai richiesta."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Conteggi di esami ordinati come proxy del sospetto clinico (lattato, bilirubina, AST)",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      8,
+      14,
+      7,
+      16
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Lactate_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "AST_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "Fibrinogen_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si rimuove la lettura della frequenza di ordinazione degli esami lasciando intatti i valori di laboratorio."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.17883543221946102,
+     "after_A_test": {
+      "auroc": 0.9024536938297193,
+      "auprc": 0.37960956612768104,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6433626425005963,
+      "auprc": 0.02690103273325628,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.17883543221946102,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.7523008099551785,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H3",
+     "title": "Confondimento per tipo di terapia intensiva (SICU protettiva)",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0
+     ],
+     "claimed_direction": "decreases_risk",
+     "confidence": 0.65,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si elimina l'informazione sul reparto: tutti i pazienti vengono trattati come 'reparto non specificato'."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Tempo di degenza e timing di ricovero come scorciatoie temporali",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      31,
+      19,
+      22,
+      29,
+      0
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.55,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "ICULOS_z",
+       "HospAdmTime_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si rimuove l'informazione temporale: il modello vede ogni ora come se fosse al tempo medio di degenza o di ricovero."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.49150088898500605,
+     "after_A_test": {
+      "auroc": 0.883207418573771,
+      "auprc": 0.29437669125293203,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.571037934872038,
+      "auprc": 0.018133755998036686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Segnale fisiologico/SOFA genuino ma secondario (neuroni 10, 15, 8)",
+     "suspicious": false,
+     "features": [
+      "Bilirubin_direct_last_z",
+      "PTT_last_z",
+      "Creatinine_last_z",
+      "BUN_last_z",
+      "TroponinI_last_z",
+      "WBC_last_z",
+      "HR_last_z",
+      "SaO2_last_z",
+      "FiO2_last_z",
+      "Resp_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15,
+      8,
+      24,
+      11
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Bilirubin_direct_last_z",
+       "PTT_last_z",
+       "Creatinine_last_z",
+       "BUN_last_z",
+       "TroponinI_last_z",
+       "WBC_last_z",
+       "HR_last_z",
+       "SaO2_last_z",
+       "FiO2_last_z",
+       "Resp_last_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si azzerano i principali input fisiologici per misurarne il contributo reale rispetto ai segnali di processo (H1 e H2)."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.6612611841298521,
+     "after_A_test": {
+      "auroc": 0.8999194267726698,
+      "auprc": 0.3820771337248823,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6296223819947245,
+      "auprc": 0.023852069730091918,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.47531893413881815,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 2.5414384311294307,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H6",
+     "title": "Criteri chiave di sepsi quasi ignorati (temperatura, MAP, piastrine, valore del lattato)",
+     "suspicious": true,
+     "features": [
+      "Temp_last_z",
+      "MAP_last_z",
+      "Platelets_last_z",
+      "Lactate_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      19,
+      30,
+      23,
+      15,
+      2
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Temp_last_z",
+       "MAP_last_z",
+       "Platelets_last_z",
+       "Lactate_last_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Se il modello li ignora davvero, rimuoverli non dovrebbe cambiare quasi nulla."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3310226365982333,
+     "after_A_test": {
+      "auroc": 0.9040753605735766,
+      "auprc": 0.38037216564763315,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.636096204359204,
+      "auprc": 0.025873211936241428,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.33230599321012244,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.4209554169742343,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H7",
+     "title": "Ablazione del neurone 'freno' dominante (28)",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       28
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si isola il contributo del singolo neurone che porta circa 1.2 dei circa 6 logit dell'emocoltura."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7739275255448055,
+     "after_A_test": {
+      "auroc": 0.8988856265136971,
+      "auprc": 0.33865286155471275,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.7274516187919047,
+      "auprc": 0.05090860700485606,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.19455077277588353,
+     "reduction": 0.194053697479172,
+     "measured_effect": 3.876012392791782,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 19% della dipendenza"
+    }
+   ],
+   "counts": {
+    "confermata": 6,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 5,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "trovata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "A",
+   "rep": 2,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage dalla richiesta di emocoltura (blood_culture_ordered)",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      10,
+      5,
+      23,
+      31,
+      16,
+      14,
+      29,
+      21,
+      22,
+      4,
+      27,
+      18
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.92,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerare la colonna di W1 di blood_culture_ordered toglie al modello l'informazione sulla richiesta di coltura. Una verifica alternativa pi\u00f9 ristretta \u00e8 l'ablazione del neurone 28, il principale canale di questa feature."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Scorciatoia sul tipo di reparto (SICU protettiva)",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0
+     ],
+     "claimed_direction": "decreases_risk",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuovere la lettura del reparto e verificare quanto della capacit\u00e0 discriminativa dipende da questa informazione."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H3",
+     "title": "Dipendenza dal tempo di degenza (ICULOS) e dall'ingresso in ospedale",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      19,
+      31,
+      22,
+      28
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "ICULOS_z",
+       "HospAdmTime_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Eliminare l'informazione temporale e amministrativa per misurare quanto la predizione dipende dal tempo trascorso."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.49150088898500605,
+     "after_A_test": {
+      "auroc": 0.883207418573771,
+      "auprc": 0.29437669125293203,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.571037934872038,
+      "auprc": 0.018133755998036686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Missingness informativa: la frequenza degli esami come proxy del sospetto clinico",
+     "suspicious": true,
+     "features": [
+      "HR_n_meas_6h",
+      "O2Sat_n_meas_6h",
+      "Temp_n_meas_6h",
+      "SBP_n_meas_6h",
+      "MAP_n_meas_6h",
+      "DBP_n_meas_6h",
+      "Resp_n_meas_6h",
+      "EtCO2_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "HCO3_n_meas_6h",
+      "FiO2_n_meas_6h",
+      "pH_n_meas_6h",
+      "PaCO2_n_meas_6h",
+      "SaO2_n_meas_6h",
+      "AST_n_meas_6h",
+      "BUN_n_meas_6h",
+      "Alkalinephos_n_meas_6h",
+      "Calcium_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "Creatinine_n_meas_6h",
+      "Bilirubin_direct_n_meas_6h",
+      "Glucose_n_meas_6h",
+      "Lactate_n_meas_6h",
+      "Magnesium_n_meas_6h",
+      "Phosphate_n_meas_6h",
+      "Potassium_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "TroponinI_n_meas_6h",
+      "Hct_n_meas_6h",
+      "Hgb_n_meas_6h",
+      "PTT_n_meas_6h",
+      "WBC_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Platelets_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      14,
+      30,
+      8,
+      19
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.65,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "HR_n_meas_6h",
+       "O2Sat_n_meas_6h",
+       "Temp_n_meas_6h",
+       "SBP_n_meas_6h",
+       "MAP_n_meas_6h",
+       "DBP_n_meas_6h",
+       "Resp_n_meas_6h",
+       "EtCO2_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "HCO3_n_meas_6h",
+       "FiO2_n_meas_6h",
+       "pH_n_meas_6h",
+       "PaCO2_n_meas_6h",
+       "SaO2_n_meas_6h",
+       "AST_n_meas_6h",
+       "BUN_n_meas_6h",
+       "Alkalinephos_n_meas_6h",
+       "Calcium_n_meas_6h",
+       "Chloride_n_meas_6h",
+       "Creatinine_n_meas_6h",
+       "Bilirubin_direct_n_meas_6h",
+       "Glucose_n_meas_6h",
+       "Lactate_n_meas_6h",
+       "Magnesium_n_meas_6h",
+       "Phosphate_n_meas_6h",
+       "Potassium_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "TroponinI_n_meas_6h",
+       "Hct_n_meas_6h",
+       "Hgb_n_meas_6h",
+       "PTT_n_meas_6h",
+       "WBC_n_meas_6h",
+       "Fibrinogen_n_meas_6h",
+       "Platelets_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerare tutti i conteggi di misurazione toglie la lettura della frequenza degli esami. Una variante mirata \u00e8 azzerare solo Lactate_n_meas_6h, Bilirubin_total_n_meas_6h e AST_n_meas_6h."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.9773328721158687,
+     "after_A_test": {
+      "auroc": 0.8874027256073219,
+      "auprc": 0.34589964148852936,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6620936978199213,
+      "auprc": 0.03137300140563983,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.6302194696970217,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.3343132512217447,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Segnale fisiologico di disfunzione d'organo (plausibile)",
+     "suspicious": false,
+     "features": [
+      "Bilirubin_direct_last_z",
+      "PTT_last_z",
+      "Creatinine_last_z",
+      "BUN_last_z",
+      "HR_last_z",
+      "WBC_last_z",
+      "TroponinI_last_z",
+      "FiO2_last_z",
+      "SaO2_last_z",
+      "Calcium_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15,
+      8,
+      24
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       10,
+       15
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "I neuroni 10 e 15 raccolgono la maggior parte dei segnali di laboratorio di disfunzione d'organo (oltre a parte dell'emocoltura e del reparto). Ablarli serve a misurare il contributo di questo canale."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7982558467486713,
+     "after_A_test": {
+      "auroc": 0.8980769275500705,
+      "auprc": 0.3831011649336382,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6291378241213366,
+      "auprc": 0.02587271794661057,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.46990034619552407,
+     "dep_after": 0.3177645446270268,
+     "reduction": 0.3237618418463434,
+     "measured_effect": 1.7565646735285039,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H6",
+     "title": "Segni vitali chiave della sepsi quasi ignorati",
+     "suspicious": true,
+     "features": [
+      "Temp_last_z",
+      "Resp_last_z",
+      "MAP_last_z",
+      "SBP_last_z",
+      "DBP_last_z",
+      "O2Sat_last_z",
+      "Lactate_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      2,
+      19,
+      30,
+      15
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Temp_last_z",
+       "Resp_last_z",
+       "MAP_last_z",
+       "SBP_last_z",
+       "DBP_last_z",
+       "O2Sat_last_z",
+       "Lactate_last_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Se il modello ignora davvero questi segni vitali, togliere la loro lettura dovrebbe cambiare poco la performance."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.4120191101717658,
+     "after_A_test": {
+      "auroc": 0.9018775436424136,
+      "auprc": 0.3702890058079058,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6291874526285353,
+      "auprc": 0.024914566041193083,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3995035701826189,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.4064455794783764,
+     "verdict": "confermata",
+     "reason": ""
+    }
+   ],
+   "counts": {
+    "confermata": 6,
+    "smentita": 0,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 5,
+    "smentita": 0,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "trovata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "B10",
+   "rep": 0,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage tramite la richiesta di emocoltura (\u00e8 il sospetto clinico, non un predittore)",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      0,
+      4,
+      5,
+      6,
+      7,
+      8,
+      11,
+      12,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      27,
+      28,
+      29,
+      31
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.93,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Il segnale passa per quasi tutti i neuroni, quindi ablarne alcuni non basterebbe. Azzerare la colonna di input elimina tutto il percorso in un colpo solo."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Intensit\u00e0 delle richieste di esami (missingness informativa) al posto del loro valore",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "FiO2_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      14,
+      7,
+      16,
+      20,
+      18
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.75,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Lactate_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "AST_n_meas_6h",
+       "Fibrinogen_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "FiO2_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuove la lettura dei conteggi di richieste con il maggior effetto positivo sul rischio e lascia intatti i valori dei laboratori."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3913217085034945,
+     "after_A_test": {
+      "auroc": 0.8977756821493701,
+      "auprc": 0.366935344328193,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6333503051587042,
+      "auprc": 0.026180370685879823,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3913217085034945,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 1.477862905649308,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H3",
+     "title": "Scorciatoia sul tipo di reparto (SICU protettiva, MICU a rischio)",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      29,
+      0,
+      31,
+      23
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.65,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuove l'informazione sul reparto e costringe il modello a basarsi sulla fisiologia."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Scorciatoia temporale: ICULOS e HospAdmTime",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      16,
+      10,
+      29,
+      31,
+      20,
+      19,
+      7,
+      12
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "ICULOS_z",
+       "HospAdmTime_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Elimina la dipendenza diretta dal tempo trascorso in ospedale e in terapia intensiva."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.49150088898500605,
+     "after_A_test": {
+      "auroc": 0.883207418573771,
+      "auprc": 0.29437669125293203,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.571037934872038,
+      "auprc": 0.018133755998036686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Asse fisiologico simile al SOFA (atteso, plausibile)",
+     "suspicious": false,
+     "features": [
+      "PTT_last_z",
+      "Creatinine_last_z",
+      "BUN_last_z",
+      "Bilirubin_direct_last_z",
+      "TroponinI_last_z",
+      "HR_last_z",
+      "WBC_last_z",
+      "FiO2_last_z",
+      "SaO2_last_z",
+      "MAP_last_z",
+      "Temp_last_z",
+      "Resp_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       10,
+       15
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "I neuroni 10 e 15 raccolgono la maggior parte del segnale di disfunzione renale, coagulativa ed epatica. Ablarli verifica quanto il modello dipende dalla fisiologia."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7982558467486713,
+     "after_A_test": {
+      "auroc": 0.8980769275500705,
+      "auprc": 0.3831011649336382,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6291378241213366,
+      "auprc": 0.02587271794661057,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.5984815831823287,
+     "dep_after": 0.4479422012226128,
+     "reduction": 0.2515355295634114,
+     "measured_effect": 2.7880823643030936,
+     "verdict": "confermata",
+     "reason": ""
+    }
+   ],
+   "counts": {
+    "confermata": 5,
+    "smentita": 0,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 4,
+    "smentita": 0,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "trovata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "B10",
+   "rep": 1,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "L'ordine di emocoltura \u00e8 il predittore dominante (leakage e decisione clinica)",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      5,
+      14,
+      21,
+      31,
+      23,
+      12,
+      29,
+      7,
+      0,
+      4,
+      18,
+      22,
+      27,
+      19,
+      10,
+      16
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.95,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "L'effetto \u00e8 distribuito su pi\u00f9 di 20 neuroni: ablarne qualcuno non basterebbe. Azzerare la colonna di W1 elimina del tutto il percorso. In alternativa si pu\u00f2 fissare la feature a 0 (clamp_input)."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Il numero di misure di laboratorio fa da proxy dell'intensit\u00e0 di cura",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "FiO2_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "HR_n_meas_6h",
+      "Platelets_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      14,
+      8,
+      30,
+      19
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.75,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Lactate_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "AST_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "Fibrinogen_n_meas_6h",
+       "FiO2_n_meas_6h",
+       "Chloride_n_meas_6h",
+       "HR_n_meas_6h",
+       "Platelets_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si tolgono i proxy di comportamento clinico (frequenza degli esami) e si lasciano i valori."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 1.0908617752734802,
+     "after_A_test": {
+      "auroc": 0.8924352137242414,
+      "auprc": 0.34773568568215096,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6202666036617464,
+      "auprc": 0.025112276676456907,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.5618765550647863,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.2663613203289113,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H3",
+     "title": "Scorciatoia sul reparto (SICU protettiva, MICU a rischio)",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      31,
+      29,
+      0,
+      28,
+      8,
+      20
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si elimina la dipendenza dal tipo di reparto."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Scorciatoia temporale (ICULOS e HospAdmTime)",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      16,
+      31,
+      29,
+      20,
+      0,
+      19,
+      22,
+      4,
+      10,
+      26
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.55,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "ICULOS_z",
+       "HospAdmTime_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si rimuove l'informazione sul tempo di degenza."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.49150088898500605,
+     "after_A_test": {
+      "auroc": 0.883207418573771,
+      "auprc": 0.29437669125293203,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.571037934872038,
+      "auprc": 0.018133755998036686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Componente fisiologica legittima ma debole (disfunzione d'organo e coagulazione)",
+     "suspicious": false,
+     "features": [
+      "PTT_last_z",
+      "BUN_last_z",
+      "Creatinine_last_z",
+      "TroponinI_last_z",
+      "Bilirubin_direct_last_z",
+      "AST_last_z",
+      "WBC_last_z",
+      "HR_last_z",
+      "FiO2_last_z",
+      "SaO2_last_z",
+      "Temp_last_z",
+      "Lactate_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15,
+      24,
+      22
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       10,
+       15
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "10 e 15 sono i neuroni principali che leggono la disfunzione d'organo. Ablandoli si verifica quanto contribuisce davvero la fisiologia."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7982558467486713,
+     "after_A_test": {
+      "auroc": 0.8980769275500705,
+      "auprc": 0.3831011649336382,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6291378241213366,
+      "auprc": 0.02587271794661057,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.5333513254987974,
+     "dep_after": 0.38895845426739994,
+     "reduction": 0.2707275004826495,
+     "measured_effect": 3.1184267713613827,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H6",
+     "title": "Effetto demografico minore (sesso)",
+     "suspicious": true,
+     "features": [
+      "Gender_male"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      5,
+      1
+     ],
+     "claimed_direction": "decreases_risk",
+     "confidence": 0.3,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Gender_male"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si elimina la dipendenza diretta dal sesso."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.03914077062339302,
+     "after_A_test": {
+      "auroc": 0.9077129941753526,
+      "auprc": 0.3903827707117506,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6619281741933047,
+      "auprc": 0.028803717385819664,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.02866982999379043,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.015542529910938801,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.029 < 0.1); verso sbagliato (effetto misurato +0.016)"
+    }
+   ],
+   "counts": {
+    "confermata": 5,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 4,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "trovata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "B10",
+   "rep": 2,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage tramite la richiesta di emocoltura",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      10,
+      5,
+      31,
+      23,
+      16,
+      14,
+      29,
+      0,
+      7,
+      11,
+      12,
+      20,
+      21,
+      24,
+      25,
+      6,
+      17,
+      4,
+      18,
+      19,
+      22,
+      27
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.95,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerare la colonna fa smettere al modello di leggere la richiesta di emocoltura, cos\u00ec si misura quanta performance dipende dal leakage."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Missingness informativa: l'intensit\u00e0 degli esami ordinati come proxy del sospetto clinico",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "TroponinI_n_meas_6h",
+      "HR_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "Platelets_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      14,
+      7,
+      16,
+      30,
+      19,
+      8
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.75,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "HR_n_meas_6h",
+       "O2Sat_n_meas_6h",
+       "Temp_n_meas_6h",
+       "SBP_n_meas_6h",
+       "MAP_n_meas_6h",
+       "DBP_n_meas_6h",
+       "Resp_n_meas_6h",
+       "EtCO2_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "HCO3_n_meas_6h",
+       "FiO2_n_meas_6h",
+       "pH_n_meas_6h",
+       "PaCO2_n_meas_6h",
+       "SaO2_n_meas_6h",
+       "AST_n_meas_6h",
+       "BUN_n_meas_6h",
+       "Alkalinephos_n_meas_6h",
+       "Calcium_n_meas_6h",
+       "Chloride_n_meas_6h",
+       "Creatinine_n_meas_6h",
+       "Bilirubin_direct_n_meas_6h",
+       "Glucose_n_meas_6h",
+       "Lactate_n_meas_6h",
+       "Magnesium_n_meas_6h",
+       "Phosphate_n_meas_6h",
+       "Potassium_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "TroponinI_n_meas_6h",
+       "Hct_n_meas_6h",
+       "Hgb_n_meas_6h",
+       "PTT_n_meas_6h",
+       "WBC_n_meas_6h",
+       "Fibrinogen_n_meas_6h",
+       "Platelets_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerando tutti i conteggi di misurazione resta solo il contenuto dei valori; si misura quanto il modello sfrutta il comportamento di ordinazione degli esami."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.9773328721158687,
+     "after_A_test": {
+      "auroc": 0.8874027256073219,
+      "auprc": 0.34589964148852936,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6620936978199213,
+      "auprc": 0.03137300140563983,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3907485758367145,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.47889083502406365,
+     "verdict": "smentita",
+     "reason": "verso sbagliato (effetto misurato -0.479)"
+    },
+    {
+     "id": "H3",
+     "title": "Scorciatoia sul tipo di reparto (SICU contro MICU)",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0
+     ],
+     "claimed_direction": "decreases_risk",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuovere l'informazione sul reparto per verificare se la discriminazione dipende dal setting amministrativo."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Tempo di degenza e tempo prima del ricovero in TI come proxy del rischio",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      19,
+      31,
+      22,
+      12,
+      7
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.55,
+     "intervention": {
+      "type": "clamp_input",
+      "features": [
+       "ICULOS_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Fissare ICULOS al valore medio (z=0) elimina la dipendenza dal tempo trascorso in TI."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.410753926945946,
+     "after_A_test": {
+      "auroc": 0.886428557243344,
+      "auprc": 0.2975035434357585,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.5761580604911695,
+      "auprc": 0.018436220997393494,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.1239074057898503,
+     "reduction": 0.7256471662055981,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Segnale fisiologico legittimo ma debole",
+     "suspicious": false,
+     "features": [
+      "Creatinine_last_z",
+      "Bilirubin_direct_last_z",
+      "PTT_last_z",
+      "BUN_last_z",
+      "HR_last_z",
+      "WBC_last_z",
+      "TroponinI_last_z",
+      "Temp_last_z",
+      "Resp_last_z",
+      "MAP_last_z",
+      "Lactate_last_z",
+      "Age_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15,
+      24,
+      16,
+      7,
+      22
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       10,
+       15
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "I neuroni 10 (PTT, troponina, BUN, creatinina, SICU) e 15 (bilirubina diretta, AST, troponina) portano gran parte del segnale da disfunzione d'organo; ablarli mostra quanto contribuisce la fisiologia."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7982558467486713,
+     "after_A_test": {
+      "auroc": 0.8980769275500705,
+      "auprc": 0.3831011649336382,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6291378241213366,
+      "auprc": 0.02587271794661057,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.566250324656602,
+     "dep_after": 0.4286595380992215,
+     "reduction": 0.24298579721048508,
+     "measured_effect": 2.8304034750631053,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 24% della dipendenza"
+    }
+   ],
+   "counts": {
+    "confermata": 3,
+    "smentita": 2,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 3,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "citata, non confermata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 0,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage: l'ordine di emocoltura domina la previsione",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      5,
+      7,
+      11,
+      12,
+      14,
+      15,
+      20,
+      21,
+      23,
+      25,
+      29,
+      31,
+      4,
+      18,
+      27,
+      19,
+      22
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.92,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerando la colonna il modello non legge pi\u00f9 l'ordine di coltura. Si misura quanta parte della capacit\u00e0 di discriminare (AUROC) dipende da questo segnale."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "La frequenza di misurazione del lattato (e di altri esami) conta pi\u00f9 del suo valore",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "Platelets_n_meas_6h",
+      "HR_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      7,
+      14,
+      20,
+      18,
+      17
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.75,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Lactate_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "AST_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "Fibrinogen_n_meas_6h",
+       "Chloride_n_meas_6h",
+       "Platelets_n_meas_6h",
+       "HR_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si rimuove la lettura dei conteggi di misura pi\u00f9 influenti e si osserva quanto calano le prestazioni e il rischio nei pazienti molto monitorati."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 1.2498991868674016,
+     "after_A_test": {
+      "auroc": 0.8974975570606356,
+      "auprc": 0.3585299954965438,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6299791500416203,
+      "auprc": 0.025731308360602355,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.39075726153040524,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.4788709948059793,
+     "verdict": "smentita",
+     "reason": "verso sbagliato (effetto misurato -0.479)"
+    },
+    {
+     "id": "H3",
+     "title": "Il reparto SICU abbassa il rischio a parit\u00e0 di fisiologia",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      29,
+      0,
+      31,
+      23
+     ],
+     "claimed_direction": "decreases_risk",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si elimina l'informazione sul reparto e si verifica se la calibrazione per sottogruppo migliora senza grosse perdite di AUROC."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Tempo di degenza (ICULOS) e tempo pre-terapia intensiva come scorciatoie temporali",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      16,
+      10,
+      29,
+      31,
+      20,
+      19
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "clamp_input",
+      "features": [
+       "ICULOS_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Fissando ICULOS al valore medio si elimina la dipendenza dal tempo di degenza."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.410753926945946,
+     "after_A_test": {
+      "auroc": 0.886428557243344,
+      "auprc": 0.2975035434357585,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.5761580604911695,
+      "auprc": 0.018436220997393494,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.1239074057898503,
+     "reduction": 0.7256471662055981,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Segnale fisiologico debole e in parte incoerente (vitali e SIRS)",
+     "suspicious": true,
+     "features": [
+      "Temp_last_z",
+      "HR_last_z",
+      "Resp_last_z",
+      "MAP_last_z",
+      "Lactate_last_z",
+      "WBC_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      19,
+      30,
+      10,
+      15,
+      2
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       10,
+       15
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "I neuroni 10 e 15 raccolgono la maggior parte del segnale da esami di laboratorio e danno d'organo. Ablandoli si misura quanto il modello dipende dalla fisiologia reale rispetto alle scorciatoie."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7982558467486713,
+     "after_A_test": {
+      "auroc": 0.8980769275500705,
+      "auprc": 0.3831011649336382,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6291378241213366,
+      "auprc": 0.02587271794661057,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.45082308882201405,
+     "dep_after": 0.3447590851031934,
+     "reduction": 0.23526746155784162,
+     "measured_effect": 1.3769291925803173,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 24% della dipendenza"
+    }
+   ],
+   "counts": {
+    "confermata": 3,
+    "smentita": 2,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 3,
+    "smentita": 2,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "citata, non confermata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 1,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage dall'ordine di emocoltura (blood_culture_ordered)",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      10,
+      5,
+      31,
+      23,
+      16,
+      21,
+      12,
+      14,
+      25,
+      29,
+      20,
+      11,
+      7,
+      6,
+      0,
+      17,
+      4,
+      18,
+      27,
+      22,
+      19
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.93,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerando la colonna di W1 il modello non legge pi\u00f9 l'ordine di coltura. Le ore senza coltura restano identiche, perch\u00e9 l'input vale gi\u00e0 0; si isola cos\u00ec esattamente il contributo della feature."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Il tempo di degenza in terapia intensiva (ICULOS_z) aumenta il rischio",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      19,
+      31,
+      22,
+      29,
+      0,
+      20
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.75,
+     "intervention": {
+      "type": "clamp_input",
+      "features": [
+       "ICULOS_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Fissare ICULOS_z al valore medio (0) toglie la dipendenza dal tempo trascorso in terapia intensiva senza spostare la media del logit."
+     },
+     "tags": [
+      "ICULOS"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.410753926945946,
+     "after_A_test": {
+      "auroc": 0.886428557243344,
+      "auprc": 0.2975035434357585,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.5761580604911695,
+      "auprc": 0.018436220997393494,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.38933217313523716,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 1.144791757247242,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H3",
+     "title": "Il tipo di terapia intensiva (SICU/MICU) fa da proxy della popolazione",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0,
+      23,
+      8
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Si elimina la lettura del reparto, cos\u00ec pazienti con fisiologia identica ricevono lo stesso rischio qualunque sia il reparto."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "L'intensit\u00e0 di misurazione dei laboratori fa da segnale di rischio (informative missingness)",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Lactate_n_meas_6h",
+      "HCO3_n_meas_6h",
+      "pH_n_meas_6h",
+      "PaCO2_n_meas_6h",
+      "SaO2_n_meas_6h",
+      "BUN_n_meas_6h",
+      "Alkalinephos_n_meas_6h",
+      "Calcium_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "Creatinine_n_meas_6h",
+      "Bilirubin_direct_n_meas_6h",
+      "Glucose_n_meas_6h",
+      "Magnesium_n_meas_6h",
+      "Phosphate_n_meas_6h",
+      "Potassium_n_meas_6h",
+      "TroponinI_n_meas_6h",
+      "Hct_n_meas_6h",
+      "Hgb_n_meas_6h",
+      "PTT_n_meas_6h",
+      "WBC_n_meas_6h",
+      "Platelets_n_meas_6h",
+      "FiO2_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      14,
+      7,
+      16,
+      8,
+      29,
+      20,
+      30
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.65,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "BaseExcess_n_meas_6h",
+       "HCO3_n_meas_6h",
+       "FiO2_n_meas_6h",
+       "pH_n_meas_6h",
+       "PaCO2_n_meas_6h",
+       "SaO2_n_meas_6h",
+       "AST_n_meas_6h",
+       "BUN_n_meas_6h",
+       "Alkalinephos_n_meas_6h",
+       "Calcium_n_meas_6h",
+       "Chloride_n_meas_6h",
+       "Creatinine_n_meas_6h",
+       "Bilirubin_direct_n_meas_6h",
+       "Glucose_n_meas_6h",
+       "Lactate_n_meas_6h",
+       "Magnesium_n_meas_6h",
+       "Phosphate_n_meas_6h",
+       "Potassium_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "TroponinI_n_meas_6h",
+       "Hct_n_meas_6h",
+       "Hgb_n_meas_6h",
+       "PTT_n_meas_6h",
+       "WBC_n_meas_6h",
+       "Fibrinogen_n_meas_6h",
+       "Platelets_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Il modello smette di leggere quante volte sono stati richiesti gli esami di laboratorio e pu\u00f2 usare solo i valori."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.4280867315266567,
+     "after_A_test": {
+      "auroc": 0.8976366527259475,
+      "auprc": 0.3698492063347548,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.637136134391167,
+      "auprc": 0.026898388269144927,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4280867315266567,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 1.3317302361218604,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "Una lunga degenza ospedaliera prima della terapia intensiva aumenta il rischio",
+     "suspicious": true,
+     "features": [
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      7,
+      12,
+      26
+     ],
+     "claimed_direction": "decreases_risk",
+     "confidence": 0.5,
+     "intervention": {
+      "type": "clamp_input",
+      "features": [
+       "HospAdmTime_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Fissare la variabile alla media rimuove la dipendenza dal tempo passato in ospedale prima della terapia intensiva."
+     },
+     "tags": [
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.19824979255736327,
+     "after_A_test": {
+      "auroc": 0.9050979347249509,
+      "auprc": 0.387818973332589,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6600349280177245,
+      "auprc": 0.028384823559881027,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.12491915177056084,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.47681348796678796,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H6",
+     "title": "Segnale fisiologico legittimo ma debole: disfunzione d'organo e segni vitali",
+     "suspicious": false,
+     "features": [
+      "Bilirubin_direct_last_z",
+      "PTT_last_z",
+      "Creatinine_last_z",
+      "BUN_last_z",
+      "TroponinI_last_z",
+      "HR_last_z",
+      "Temp_last_z",
+      "Resp_last_z",
+      "Lactate_last_z",
+      "FiO2_last_z",
+      "SaO2_last_z",
+      "WBC_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15,
+      8,
+      24,
+      22,
+      19
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.55,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Bilirubin_direct_last_z",
+       "PTT_last_z",
+       "Creatinine_last_z",
+       "BUN_last_z",
+       "TroponinI_last_z",
+       "HR_last_z",
+       "Temp_last_z",
+       "Resp_last_z",
+       "Lactate_last_z",
+       "FiO2_last_z",
+       "SaO2_last_z",
+       "WBC_last_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "\u00c8 il controllo: misura quanta performance viene davvero dalla fisiologia, da confrontare con l'effetto dell'intervento H1."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7457096981425311,
+     "after_A_test": {
+      "auroc": 0.8947970531436326,
+      "auprc": 0.3634533067991614,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6018377061565953,
+      "auprc": 0.021323580119159122,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.5676236901293709,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.4595504034488207,
+     "verdict": "confermata",
+     "reason": ""
+    }
+   ],
+   "counts": {
+    "confermata": 6,
+    "smentita": 0,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 5,
+    "smentita": 0,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "trovata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 2,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage: l'ordine di emocoltura domina la previsione",
+     "suspicious": true,
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      28,
+      8,
+      15,
+      5,
+      10,
+      23,
+      31,
+      21,
+      16,
+      14,
+      20,
+      12,
+      11,
+      7,
+      0,
+      4,
+      18,
+      27,
+      22,
+      19
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.92,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "blood_culture_ordered"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Azzerare la colonna di W1 elimina lo shortcut. Si misura quanto della performance dipende dall'ordine di emocoltura."
+     },
+     "tags": [
+      "bc"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.2413942122041757,
+     "after_A_test": {
+      "auroc": 0.7627511212750394,
+      "auprc": 0.08922962502019083,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6887768451472251,
+      "auprc": 0.048834076826976686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.2413942122041757,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 3.876012392791782,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H2",
+     "title": "Missingness informativa: i conteggi di misurazioni fanno da proxy del comportamento clinico",
+     "suspicious": true,
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "FiO2_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Magnesium_n_meas_6h",
+      "HR_n_meas_6h",
+      "Platelets_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "SBP_n_meas_6h",
+      "Creatinine_n_meas_6h"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      7,
+      14,
+      16,
+      30,
+      8,
+      31,
+      23,
+      5,
+      19
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "HR_n_meas_6h",
+       "O2Sat_n_meas_6h",
+       "Temp_n_meas_6h",
+       "SBP_n_meas_6h",
+       "MAP_n_meas_6h",
+       "DBP_n_meas_6h",
+       "Resp_n_meas_6h",
+       "EtCO2_n_meas_6h",
+       "BaseExcess_n_meas_6h",
+       "HCO3_n_meas_6h",
+       "FiO2_n_meas_6h",
+       "pH_n_meas_6h",
+       "PaCO2_n_meas_6h",
+       "SaO2_n_meas_6h",
+       "AST_n_meas_6h",
+       "BUN_n_meas_6h",
+       "Alkalinephos_n_meas_6h",
+       "Calcium_n_meas_6h",
+       "Chloride_n_meas_6h",
+       "Creatinine_n_meas_6h",
+       "Bilirubin_direct_n_meas_6h",
+       "Glucose_n_meas_6h",
+       "Lactate_n_meas_6h",
+       "Magnesium_n_meas_6h",
+       "Phosphate_n_meas_6h",
+       "Potassium_n_meas_6h",
+       "Bilirubin_total_n_meas_6h",
+       "TroponinI_n_meas_6h",
+       "Hct_n_meas_6h",
+       "Hgb_n_meas_6h",
+       "PTT_n_meas_6h",
+       "WBC_n_meas_6h",
+       "Fibrinogen_n_meas_6h",
+       "Platelets_n_meas_6h"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuove tutti i segnali di frequenza di misurazione e lascia solo i valori. Un test pi\u00f9 mirato \u00e8 azzerare solo Lactate_n_meas_6h."
+     },
+     "tags": [
+      "counts"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.9773328721158687,
+     "after_A_test": {
+      "auroc": 0.8874027256073219,
+      "auprc": 0.34589964148852936,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6620936978199213,
+      "auprc": 0.03137300140563983,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.7163149646943423,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.8005157427417454,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H3",
+     "title": "Shortcut amministrativo: l'unit\u00e0 di terapia intensiva (SICU/MICU)",
+     "suspicious": true,
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0
+     ],
+     "claimed_direction": "mixed",
+     "confidence": 0.7,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Unit_SICU",
+       "Unit_MICU"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Elimina il prior dipendente dall'unit\u00e0."
+     },
+     "tags": [
+      "Unit"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.3990729411974904,
+     "after_A_test": {
+      "auroc": 0.9007265018636976,
+      "auprc": 0.3842389923196422,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6680394481410121,
+      "auprc": 0.029702896531101558,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.3990729411974904,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": -0.6757287187027138,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H4",
+     "title": "Effetti temporali: durata della degenza in terapia intensiva e tempo dal ricovero ospedaliero",
+     "suspicious": true,
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      16,
+      31,
+      19,
+      22,
+      7,
+      12
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.6,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "ICULOS_z",
+       "HospAdmTime_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Rimuove la dipendenza dal tempo di degenza e dal tempo pre-terapia intensiva."
+     },
+     "tags": [
+      "ICULOS",
+      "HospAdmTime"
+     ],
+     "note": "",
+     "mean_abs_dlogit_A": 0.49150088898500605,
+     "after_A_test": {
+      "auroc": 0.883207418573771,
+      "auprc": 0.29437669125293203,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.571037934872038,
+      "auprc": 0.018133755998036686,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4516352321795431,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 0.6550301069579892,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H5",
+     "title": "La fisiologia della sepsi \u00e8 quasi ignorata (lattato, vitali, WBC)",
+     "suspicious": true,
+     "features": [
+      "Lactate_last_z",
+      "HR_last_z",
+      "Temp_last_z",
+      "Resp_last_z",
+      "WBC_last_z",
+      "MAP_last_z",
+      "SBP_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      15,
+      28,
+      14,
+      10,
+      21,
+      7
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.75,
+     "intervention": {
+      "type": "zero_input_weights",
+      "features": [
+       "Lactate_last_z",
+       "HR_last_z",
+       "Temp_last_z",
+       "Resp_last_z",
+       "WBC_last_z",
+       "MAP_last_z",
+       "SBP_last_z"
+      ],
+      "neurons": [],
+      "value": 0,
+      "direction": [],
+      "rationale": "Se l'ipotesi \u00e8 vera, togliere i valori fisiologici principali non cambia quasi nulla."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.46911567126612924,
+     "after_A_test": {
+      "auroc": 0.8989292628850689,
+      "auprc": 0.37302315814874065,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6177014189394134,
+      "auprc": 0.022994841319807592,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.4585060910090728,
+     "dep_after": 0.0,
+     "reduction": 1.0,
+     "measured_effect": 1.341628846109302,
+     "verdict": "confermata",
+     "reason": ""
+    },
+    {
+     "id": "H6",
+     "title": "Segnale legittimo ma debole: marcatori di disfunzione d'organo",
+     "suspicious": false,
+     "features": [
+      "Creatinine_last_z",
+      "BUN_last_z",
+      "Bilirubin_direct_last_z",
+      "PTT_last_z",
+      "TroponinI_last_z"
+     ],
+     "unknown_features": [],
+     "neurons": [
+      10,
+      15,
+      16
+     ],
+     "claimed_direction": "increases_risk",
+     "confidence": 0.55,
+     "intervention": {
+      "type": "ablate_neurons",
+      "features": [],
+      "neurons": [
+       10,
+       15
+      ],
+      "value": 0,
+      "direction": [],
+      "rationale": "I neuroni 10 e 15 trasportano gran parte dei segnali di disfunzione d'organo (oltre a unit\u00e0 e tempo per il 10)."
+     },
+     "tags": [],
+     "note": "",
+     "mean_abs_dlogit_A": 0.7982558467486713,
+     "after_A_test": {
+      "auroc": 0.8980769275500705,
+      "auprc": 0.3831011649336382,
+      "prevalence": 0.021868597533817747
+     },
+     "after_B_test": {
+      "auroc": 0.6291378241213366,
+      "auprc": 0.02587271794661057,
+      "prevalence": 0.014147074455869133
+     },
+     "dep_before": 0.28233561253560147,
+     "dep_after": 0.21195013538475035,
+     "reduction": 0.24929719817749085,
+     "measured_effect": 1.30970298900261,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 25% della dipendenza"
+    }
+   ],
+   "counts": {
+    "confermata": 5,
+    "smentita": 1,
+    "non verificabile": 0
+   },
+   "suspicious_counts": {
+    "confermata": 5,
+    "smentita": 0,
+    "non verificabile": 0
+   },
+   "found": {
+    "bc": "trovata",
+    "counts": "trovata",
+    "ICULOS": "trovata",
+    "HospAdmTime": "trovata",
+    "Unit": "trovata"
+   }
+  }
+ ]
+}
