@@ -1,0 +1,894 @@
+{
+ "model": "claude-fable-5-1",
+ "effort": "high",
+ "system": "Sei un revisore di modelli clinici. Ricevi i pesi di una piccola rete neurale e devi capire, leggendoli, cosa ha imparato.\n\nIl modello: MLP con 75 input -> 32 neuroni nascosti (ReLU) -> 1 uscita (logit; probabilita' = sigmoide).\nlogit = W2 . relu(W1 x + b1) + b2. W1 ha forma (32, n_in), b1 (32,), W2 (32,), b2 scalare.\nIl compito del modello: per ogni ora di degenza in terapia intensiva, prevede la sepsi nelle prossime 6 ore.\nGli input sono descritti in features.json (stesso ordine delle colonne di W1).\n\nNon hai accesso a dati di pazienti e non puoi valutare il modello: niente forward pass. Nel codice puoi analizzare i pesi come vuoi, ma non calcolare l'uscita della rete o le attivazioni dei neuroni nascosti su vettori di input concreti.\n\nIl tuo obiettivo: descrivi cosa ha imparato il modello e segnala i meccanismi clinicamente sospetti. Per ogni ipotesi indica le feature e i neuroni coinvolti e proponi un intervento sui pesi che permetta di verificarla.\n\nTipi di intervento ammessi (verranno applicati ai pesi e misurati su dati reali):\n- zero_input_weights: azzera le colonne di W1 delle feature indicate (il modello smette di leggerle);\n- ablate_neurons: azzera W2 per i neuroni indicati (il neurone non contribuisce piu' all'uscita);\n- clamp_input: la feature indicata viene fissata al valore `value` (equivale a sostituirla con una costante);\n- project_out_direction: rimuove da W1 la componente lungo la direzione indicata nello spazio degli input;\n- other: descrivi a parole un intervento diverso (potrebbe non essere verificabile automaticamente).\n\nLavora con il tool python. Quando hai finito chiama submit_report una sola volta.",
+ "user": "I file model.npz e features.json sono nella cartella corrente. Inizia l'analisi.",
+ "tools": [
+  {
+   "name": "python",
+   "description": "Esegue codice Python 3 (numpy disponibile) in una cartella che contiene model.npz e features.json. Ogni chiamata parte da un processo nuovo: lo stato non si conserva tra una chiamata e l'altra, a meno che tu non salvi file nella cartella corrente. Restituisce stdout e stderr.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "code"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "submit_report",
+   "description": "Consegna il rapporto finale. Chiamalo una sola volta, alla fine.",
+   "strict": true,
+   "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "summary",
+     "hypotheses"
+    ],
+    "properties": {
+     "summary": {
+      "type": "string",
+      "description": "Cosa ha imparato il modello, in sintesi."
+     },
+     "hypotheses": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "id",
+        "title",
+        "description",
+        "clinically_suspicious",
+        "features",
+        "neurons",
+        "effect_direction",
+        "confidence",
+        "intervention",
+        "expected_result"
+       ],
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "title": {
+         "type": "string"
+        },
+        "description": {
+         "type": "string"
+        },
+        "clinically_suspicious": {
+         "type": "boolean"
+        },
+        "features": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "description": "Nomi esatti delle feature coinvolte."
+        },
+        "neurons": {
+         "type": "array",
+         "items": {
+          "type": "integer"
+         },
+         "description": "Indici dei neuroni nascosti coinvolti (0-31)."
+        },
+        "effect_direction": {
+         "type": "string",
+         "enum": [
+          "increases_risk",
+          "decreases_risk",
+          "mixed",
+          "unknown"
+         ],
+         "description": "Verso dell'effetto sul rischio quando le feature aumentano."
+        },
+        "confidence": {
+         "type": "number",
+         "description": "Da 0 a 1."
+        },
+        "intervention": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "type",
+          "features",
+          "neurons",
+          "value",
+          "direction",
+          "rationale"
+         ],
+         "properties": {
+          "type": {
+           "type": "string",
+           "enum": [
+            "zero_input_weights",
+            "ablate_neurons",
+            "clamp_input",
+            "project_out_direction",
+            "other"
+           ]
+          },
+          "features": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "neurons": {
+           "type": "array",
+           "items": {
+            "type": "integer"
+           }
+          },
+          "value": {
+           "type": "number",
+           "description": "Valore per clamp_input (altrimenti 0)."
+          },
+          "direction": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "feature",
+             "weight"
+            ],
+            "properties": {
+             "feature": {
+              "type": "string"
+             },
+             "weight": {
+              "type": "number"
+             }
+            }
+           },
+           "description": "Per project_out_direction: direzione nello spazio degli input (altrimenti vuota)."
+          },
+          "rationale": {
+           "type": "string"
+          }
+         }
+        },
+        "expected_result": {
+         "type": "string",
+         "description": "Cosa dovrebbe succedere applicando l'intervento, se l'ipotesi e' vera."
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ ],
+ "turns": [
+  {
+   "turn": 0,
+   "stop_reason": "tool_use",
+   "text": [
+    "Inizio caricando i pesi e la descrizione delle feature."
+   ],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm = np.load('model.npz')\nprint({k: m[k].shape for k in m.files})\nf = json.load(open('features.json'))\nprint(type(f), len(f))\nprint(json.dumps(f, indent=1)[:4000])\n"
+     },
+     "output": "{'W1': (32, 75), 'b1': (32,), 'W2': (32,), 'b2': ()}\n<class 'list'> 75\n[\n {\n  \"index\": 0,\n  \"name\": \"HR_last_z\",\n  \"description\": \"ultimo valore noto di HR (forward fill; se mai misurato: valore normale 75), standardizzato\"\n },\n {\n  \"index\": 1,\n  \"name\": \"O2Sat_last_z\",\n  \"description\": \"ultimo valore noto di O2Sat (forward fill; se mai misurato: valore normale 97), standardizzato\"\n },\n {\n  \"index\": 2,\n  \"name\": \"Temp_last_z\",\n  \"description\": \"ultimo valore noto di Temp (forward fill; se mai misurato: valore normale 37.0), standardizzato\"\n },\n {\n  \"index\": 3,\n  \"name\": \"SBP_last_z\",\n  \"description\": \"ultimo valore noto di SBP (forward fill; se mai misurato: valore normale 120), standardizzato\"\n },\n {\n  \"index\": 4,\n  \"name\": \"MAP_last_z\",\n  \"description\": \"ultimo valore noto di MAP (forward fill; se mai misurato: valore normale 85), standardizzato\"\n },\n {\n  \"index\": 5,\n  \"name\": \"DBP_last_z\",\n  \"description\": \"ultimo valore noto di DBP (forward fill; se mai misurato: valore normale 70), standardizzato\"\n },\n {\n  \"index\": 6,\n  \"name\": \"Resp_last_z\",\n  \"description\": \"ultimo valore noto di Resp (forward fill; se mai misurato: valore normale 16), standardizzato\"\n },\n {\n  \"index\": 7,\n  \"name\": \"EtCO2_last_z\",\n  \"description\": \"ultimo valore noto di EtCO2 (forward fill; se mai misurato: valore normale 38), standardizzato\"\n },\n {\n  \"index\": 8,\n  \"name\": \"BaseExcess_last_z\",\n  \"description\": \"ultimo valore noto di BaseExcess (forward fill; se mai misurato: valore normale 0), standardizzato\"\n },\n {\n  \"index\": 9,\n  \"name\": \"HCO3_last_z\",\n  \"description\": \"ultimo valore noto di HCO3 (forward fill; se mai misurato: valore normale 24), standardizzato\"\n },\n {\n  \"index\": 10,\n  \"name\": \"FiO2_last_z\",\n  \"description\": \"ultimo valore noto di FiO2 (forward fill; se mai misurato: valore normale 0.21), standardizzato\"\n },\n {\n  \"index\": 11,\n  \"name\": \"pH_last_z\",\n  \"description\": \"ultimo valore noto di pH (forward fill; se mai misurato: valore normale 7.4), standardizzato\"\n },\n {\n  \"index\": 12,\n  \"name\": \"PaCO2_last_z\",\n  \"description\": \"ultimo valore noto di PaCO2 (forward fill; se mai misurato: valore normale 40), standardizzato\"\n },\n {\n  \"index\": 13,\n  \"name\": \"SaO2_last_z\",\n  \"description\": \"ultimo valore noto di SaO2 (forward fill; se mai misurato: valore normale 97), standardizzato\"\n },\n {\n  \"index\": 14,\n  \"name\": \"AST_last_z\",\n  \"description\": \"ultimo valore noto di AST (forward fill; se mai misurato: valore normale 25), standardizzato\"\n },\n {\n  \"index\": 15,\n  \"name\": \"BUN_last_z\",\n  \"description\": \"ultimo valore noto di BUN (forward fill; se mai misurato: valore normale 14), standardizzato\"\n },\n {\n  \"index\": 16,\n  \"name\": \"Alkalinephos_last_z\",\n  \"description\": \"ultimo valore noto di Alkalinephos (forward fill; se mai misurato: valore normale 70), standardizzato\"\n },\n {\n  \"index\": 17,\n  \"name\": \"Calcium_last_z\",\n  \"description\": \"ultimo valore noto di Calcium (forward fill; se mai misurato: valore normale 9.3), standardizzato\"\n },\n {\n  \"index\": 18,\n  \"name\": \"Chloride_last_z\",\n  \"description\": \"ultimo valore noto di Chloride (forward fill; se mai misurato: valore normale 102), standardizzato\"\n },\n {\n  \"index\": 19,\n  \"name\": \"Creatinine_last_z\",\n  \"description\": \"ultimo valore noto di Creatinine (forward fill; se mai misurato: valore normale 0.9), standardizzato\"\n },\n {\n  \"index\": 20,\n  \"name\": \"Bilirubin_direct_last_z\",\n  \"description\": \"ultimo valore noto di Bilirubin_direct (forward fill; se mai misurato: valore normale 0.2), standardizzato\"\n },\n {\n  \"index\": 21,\n  \"name\": \"Glucose_last_z\",\n  \"description\": \"ultimo valore noto di Glucose (forward fill; se mai misurato: valore normale 100), standardizzato\"\n },\n {\n  \"index\": 22,\n  \"name\": \"Lactate_last_z\",\n  \"description\": \"ultimo valore noto di Lactate (forward fill; se mai misurato: valore normale 1.0), standardizzato\"\n },\n {\n  \"index\": 23,\n  \"name\": \"Magnesium_last_z\",\n  \"description\": \"ultimo valore noto di Magnesium (forward fill; se mai misurato: valore normale 2.0), standardizzato\"\n },\n {\n  \"index\": 24,\n  \"name\": \"Phosphate_last_z\",\n  \"description\": \"ul\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 1,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport json\nf = json.load(open('features.json'))\nfor x in f: print(x['index'], x['name'], '|', x['description'][:110])\n"
+     },
+     "output": "0 HR_last_z | ultimo valore noto di HR (forward fill; se mai misurato: valore normale 75), standardizzato\n1 O2Sat_last_z | ultimo valore noto di O2Sat (forward fill; se mai misurato: valore normale 97), standardizzato\n2 Temp_last_z | ultimo valore noto di Temp (forward fill; se mai misurato: valore normale 37.0), standardizzato\n3 SBP_last_z | ultimo valore noto di SBP (forward fill; se mai misurato: valore normale 120), standardizzato\n4 MAP_last_z | ultimo valore noto di MAP (forward fill; se mai misurato: valore normale 85), standardizzato\n5 DBP_last_z | ultimo valore noto di DBP (forward fill; se mai misurato: valore normale 70), standardizzato\n6 Resp_last_z | ultimo valore noto di Resp (forward fill; se mai misurato: valore normale 16), standardizzato\n7 EtCO2_last_z | ultimo valore noto di EtCO2 (forward fill; se mai misurato: valore normale 38), standardizzato\n8 BaseExcess_last_z | ultimo valore noto di BaseExcess (forward fill; se mai misurato: valore normale 0), standardizzato\n9 HCO3_last_z | ultimo valore noto di HCO3 (forward fill; se mai misurato: valore normale 24), standardizzato\n10 FiO2_last_z | ultimo valore noto di FiO2 (forward fill; se mai misurato: valore normale 0.21), standardizzato\n11 pH_last_z | ultimo valore noto di pH (forward fill; se mai misurato: valore normale 7.4), standardizzato\n12 PaCO2_last_z | ultimo valore noto di PaCO2 (forward fill; se mai misurato: valore normale 40), standardizzato\n13 SaO2_last_z | ultimo valore noto di SaO2 (forward fill; se mai misurato: valore normale 97), standardizzato\n14 AST_last_z | ultimo valore noto di AST (forward fill; se mai misurato: valore normale 25), standardizzato\n15 BUN_last_z | ultimo valore noto di BUN (forward fill; se mai misurato: valore normale 14), standardizzato\n16 Alkalinephos_last_z | ultimo valore noto di Alkalinephos (forward fill; se mai misurato: valore normale 70), standardizzato\n17 Calcium_last_z | ultimo valore noto di Calcium (forward fill; se mai misurato: valore normale 9.3), standardizzato\n18 Chloride_last_z | ultimo valore noto di Chloride (forward fill; se mai misurato: valore normale 102), standardizzato\n19 Creatinine_last_z | ultimo valore noto di Creatinine (forward fill; se mai misurato: valore normale 0.9), standardizzato\n20 Bilirubin_direct_last_z | ultimo valore noto di Bilirubin_direct (forward fill; se mai misurato: valore normale 0.2), standardizzato\n21 Glucose_last_z | ultimo valore noto di Glucose (forward fill; se mai misurato: valore normale 100), standardizzato\n22 Lactate_last_z | ultimo valore noto di Lactate (forward fill; se mai misurato: valore normale 1.0), standardizzato\n23 Magnesium_last_z | ultimo valore noto di Magnesium (forward fill; se mai misurato: valore normale 2.0), standardizzato\n24 Phosphate_last_z | ultimo valore noto di Phosphate (forward fill; se mai misurato: valore normale 3.5), standardizzato\n25 Potassium_last_z | ultimo valore noto di Potassium (forward fill; se mai misurato: valore normale 4.2), standardizzato\n26 Bilirubin_total_last_z | ultimo valore noto di Bilirubin_total (forward fill; se mai misurato: valore normale 0.7), standardizzato\n27 TroponinI_last_z | ultimo valore noto di TroponinI (forward fill; se mai misurato: valore normale 0.01), standardizzato\n28 Hct_last_z | ultimo valore noto di Hct (forward fill; se mai misurato: valore normale 42), standardizzato\n29 Hgb_last_z | ultimo valore noto di Hgb (forward fill; se mai misurato: valore normale 14), standardizzato\n30 PTT_last_z | ultimo valore noto di PTT (forward fill; se mai misurato: valore normale 30), standardizzato\n31 WBC_last_z | ultimo valore noto di WBC (forward fill; se mai misurato: valore normale 7.5), standardizzato\n32 Fibrinogen_last_z | ultimo valore noto di Fibrinogen (forward fill; se mai misurato: valore normale 300), standardizzato\n33 Platelets_last_z | ultimo valore noto di Platelets (forward fill; se mai misurato: valore normale 250), standardizzato\n34 HR_n_meas_6h | numero di misurazioni di HR nelle ultime 6 ore (0-6), non standardizzato\n35 O2Sat_n_meas_6h | numero di misurazioni di O2Sat nelle ultime 6 ore (0-6), non standardizzato\n36 Temp_n_meas_6h | numero di misurazioni di Temp nelle ultime 6 ore (0-6), non standardizzato\n37 SBP_n_meas_6h | numero di misurazioni di SBP nelle ultime 6 ore (0-6), non standardizzato\n38 MAP_n_meas_6h | numero di misurazioni di MAP nelle ultime 6 ore (0-6), non standardizzato\n39 DBP_n_meas_6h | numero di misurazioni di DBP nelle ultime 6 ore (0-6), non standardizzato\n40 Resp_n_meas_6h | numero di misurazioni di Resp nelle ultime 6 ore (0-6), non standardizzato\n41 EtCO2_n_meas_6h | numero di misurazioni di EtCO2 nelle ultime 6 ore (0-6), non standardizzato\n42 BaseExcess_n_meas_6h | numero di misurazioni di BaseExcess nelle ultime 6 ore (0-6), non standardizzato\n43 HCO3_n_meas_6h | numero di misurazioni di HCO3 nelle ultime 6 ore (0-6), non standardizzato\n44 FiO2_n_meas_6h | numero di misurazioni di FiO2 nelle ultime 6 ore (0-6), non standardizzato\n45 pH_n_meas_6h | numero di misurazioni di pH nelle ultime 6 ore (0-6), non standardizzato\n46 PaCO2_n_meas_6h | numero di misurazioni di PaCO2 nelle ultime 6 ore (0-6), non standardizzato\n47 SaO2_n_meas_6h | numero di misurazioni di SaO2 nelle ultime 6 ore (0-6), non standardizzato\n48 AST_n_meas_6h | numero di misurazioni di AST nelle ultime 6 ore (0-6), non standardizzato\n49 BUN_n_meas_6h | numero di misurazioni di BUN nelle ultime 6 ore (0-6), non standardizzato\n50 Alkalinephos_n_meas_6h | numero di misurazioni di Alkalinephos nelle ultime 6 ore (0-6), non standardizzato\n51 Calcium_n_meas_6h | numero di misurazioni di Calcium nelle ultime 6 ore (0-6), non standardizzato\n52 Chloride_n_meas_6h | numero di misurazioni di Chloride nelle ultime 6 ore (0-6), non standardizzato\n53 Creatinine_n_meas_6h | numero di misurazioni di Creatinine nelle ultime 6 ore (0-6), non standardizzato\n54 Bilirubin_direct_n_meas_6h | numero di misurazioni di Bilirubin_direct nelle ultime 6 ore (0-6), non standardizzato\n55 Glucose_n_meas_6h | numero di misurazioni di Glucose nelle ultime 6 ore (0-6), non standardizzato\n56 Lactate_n_meas_6h | numero di misurazioni di Lactate nelle ultime 6 ore (0-6), non standardizzato\n57 Magnesium_n_meas_6h | numero di misurazioni di Magnesium nelle ultime 6 ore (0-6), non standardizzato\n58 Phosphate_n_meas_6h | numero di misurazioni di Phosphate nelle ultime 6 ore (0-6), non standardizzato\n59 Potassium_n_meas_6h | numero di misurazioni di Potassium nelle ultime 6 ore (0-6), non standardizzato\n60 Bilirubin_total_n_meas_6h | numero di misurazioni di Bilirubin_total nelle ultime 6 ore (0-6), non standardizzato\n61 TroponinI_n_meas_6h | numero di misurazioni di TroponinI nelle ultime 6 ore (0-6), non standardizzato\n62 Hct_n_meas_6h | numero di misurazioni di Hct nelle ultime 6 ore (0-6), non standardizzato\n63 Hgb_n_meas_6h | numero di misurazioni di Hgb nelle ultime 6 ore (0-6), non standardizzato\n64 PTT_n_meas_6h | numero di misurazioni di PTT nelle ultime 6 ore (0-6), non standardizzato\n65 WBC_n_meas_6h | numero di misurazioni di WBC nelle ultime 6 ore (0-6), non standardizzato\n66 Fibrinogen_n_meas_6h | numero di misurazioni di Fibrinogen nelle ultime 6 ore (0-6), non standardizzato\n67 Platelets_n_meas_6h | numero di misurazioni di Platelets nelle ultime 6 ore (0-6), non standardizzato\n68 Age_z | eta' in anni, standardizzata\n69 Gender_male | 1 = maschio, 0 = femmina\n70 Unit_MICU | 1 = terapia intensiva medica\n71 Unit_SICU | 1 = terapia intensiva chirurgica\n72 HospAdmTime_z | ore tra ricovero in ospedale e ingresso in terapia intensiva (negativo = prima), standardizzato\n73 ICULOS_z | ore trascorse dall'ingresso in terapia intensiva, standardizzato\n74 EHR_flag_17 | indicatore binario del sistema informatico ospedaliero registrato in quest'ora (significato non documentato)\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 2,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nnp.set_printoptions(precision=3, suppress=True, linewidth=200)\nm = np.load('model.npz'); W1, b1, W2, b2 = m['W1'], m['b1'], m['W2'], float(m['b2'])\nf = json.load(open('features.json')); names=[x['name'] for x in f]\nprint('b2', b2)\nprint('W2', W2)\nprint('b1', b1)\nprint('row norms', np.linalg.norm(W1,axis=1))\n# effective contribution per feature: sum_j W2_j * W1_ji  (linear proxy)\neff = W2 @ W1\norder = np.argsort(-np.abs(eff))\nfor i in order[:40]: print(f'{i:2d} {names[i]:28s} eff={eff[i]:+.3f}  colnorm={np.linalg.norm(W1[:,i]):.3f}')\n"
+     },
+     "output": "b2 -0.040551699697971344\nW2 [-0.223  0.157  0.246  0.268  0.181 -0.241 -0.12  -0.195 -0.755 -0.247 -0.517 -0.205 -0.211  0.158 -0.245 -0.365 -0.335 -0.185  0.237  0.478 -0.187 -0.178  0.409 -0.279 -0.219 -0.103  0.315  0.073\n -0.35  -0.254  0.408 -0.283]\nb1 [ 0.687 -0.051 -0.129 -0.003 -0.131  0.347  0.166  0.393  1.173  0.047  0.734  0.328  0.198 -0.075  0.366  0.555  0.313  0.26  -0.268 -0.094  0.195  0.185 -0.287  0.439  0.223  0.242 -0.155 -0.126\n  0.88   0.462 -0.171  0.361]\nrow norms [1.395 0.847 0.9   0.893 0.873 1.191 0.944 1.31  1.069 1.041 2.135 0.939 1.107 0.512 1.433 1.727 1.355 1.063 1.587 1.415 1.332 1.095 1.36  1.153 1.116 1.234 0.935 1.212 1.337 1.457 1.147 1.154]\n73 ICULOS_z                     eff=+1.531  colnorm=1.391\n74 EHR_flag_17                  eff=+1.476  colnorm=1.379\n71 Unit_SICU                    eff=-1.424  colnorm=1.349\n56 Lactate_n_meas_6h            eff=+0.644  colnorm=0.876\n60 Bilirubin_total_n_meas_6h    eff=+0.562  colnorm=0.644\n61 TroponinI_n_meas_6h          eff=-0.540  colnorm=1.283\n 0 HR_last_z                    eff=+0.534  colnorm=0.977\n30 PTT_last_z                   eff=+0.515  colnorm=1.545\n15 BUN_last_z                   eff=+0.476  colnorm=1.117\n31 WBC_last_z                   eff=+0.473  colnorm=1.195\n48 AST_n_meas_6h                eff=+0.420  colnorm=0.662\n20 Bilirubin_direct_last_z      eff=+0.404  colnorm=0.905\n19 Creatinine_last_z            eff=+0.398  colnorm=0.971\n13 SaO2_last_z                  eff=-0.373  colnorm=1.139\n34 HR_n_meas_6h                 eff=-0.349  colnorm=0.439\n52 Chloride_n_meas_6h           eff=-0.348  colnorm=0.467\n 6 Resp_last_z                  eff=+0.333  colnorm=0.829\n72 HospAdmTime_z                eff=-0.328  colnorm=1.087\n44 FiO2_n_meas_6h               eff=+0.325  colnorm=0.811\n66 Fibrinogen_n_meas_6h         eff=+0.325  colnorm=0.735\n11 pH_last_z                    eff=-0.315  colnorm=0.712\n42 BaseExcess_n_meas_6h         eff=+0.302  colnorm=0.559\n65 WBC_n_meas_6h                eff=+0.301  colnorm=0.498\n68 Age_z                        eff=+0.295  colnorm=1.057\n37 SBP_n_meas_6h                eff=-0.281  colnorm=0.427\n 5 DBP_last_z                   eff=-0.277  colnorm=0.570\n24 Phosphate_last_z             eff=-0.246  colnorm=0.728\n10 FiO2_last_z                  eff=+0.243  colnorm=1.081\n62 Hct_n_meas_6h                eff=-0.242  colnorm=0.507\n27 TroponinI_last_z             eff=+0.239  colnorm=1.008\n 2 Temp_last_z                  eff=+0.233  colnorm=1.259\n18 Chloride_last_z              eff=+0.227  colnorm=0.718\n49 BUN_n_meas_6h                eff=-0.215  colnorm=0.514\n17 Calcium_last_z               eff=-0.213  colnorm=1.046\n 9 HCO3_last_z                  eff=+0.202  colnorm=1.038\n53 Creatinine_n_meas_6h         eff=-0.197  colnorm=0.433\n67 Platelets_n_meas_6h          eff=-0.193  colnorm=0.569\n38 MAP_n_meas_6h                eff=+0.181  colnorm=0.461\n70 Unit_MICU                    eff=+0.175  colnorm=1.105\n55 Glucose_n_meas_6h            eff=-0.175  colnorm=0.420\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 3,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nnp.set_printoptions(precision=3, suppress=True, linewidth=200)\nm = np.load('model.npz'); W1, b1, W2, b2 = m['W1'], m['b1'], m['W2'], float(m['b2'])\nf = json.load(open('features.json')); names=[x['name'] for x in f]\nfor j in np.argsort(-np.abs(W2)):\n    row = W1[j]; o = np.argsort(-np.abs(row))[:8]\n    print(f'N{j:2d} W2={W2[j]:+.3f} b1={b1[j]:+.3f} | ' + ', '.join(f'{names[i]}:{row[i]:+.2f}' for i in o))\n"
+     },
+     "output": "N 8 W2=-0.755 b1=+1.173 | Bilirubin_direct_last_z:-0.43, Unit_MICU:+0.29, Magnesium_last_z:-0.28, Unit_SICU:+0.25, Age_z:-0.24, MAP_n_meas_6h:-0.23, Platelets_last_z:+0.22, Fibrinogen_n_meas_6h:-0.20\nN10 W2=-0.517 b1=+0.734 | PTT_last_z:-0.96, Unit_SICU:+0.64, HospAdmTime_z:+0.62, BUN_last_z:-0.59, TroponinI_last_z:-0.57, Creatinine_last_z:-0.52, SaO2_last_z:+0.51, Age_z:-0.49\nN19 W2=+0.478 b1=-0.094 | TroponinI_n_meas_6h:-0.63, WBC_last_z:+0.44, Fibrinogen_last_z:-0.32, Phosphate_last_z:-0.32, DBP_last_z:-0.31, ICULOS_z:+0.29, SaO2_n_meas_6h:-0.28, WBC_n_meas_6h:+0.28\nN22 W2=+0.409 b1=-0.287 | TroponinI_n_meas_6h:-0.67, HCO3_last_z:+0.39, Glucose_last_z:+0.30, Hct_last_z:-0.27, Hgb_last_z:-0.26, WBC_last_z:+0.25, Temp_last_z:-0.25, AST_n_meas_6h:-0.23\nN30 W2=+0.408 b1=-0.171 | Magnesium_n_meas_6h:-0.38, BUN_n_meas_6h:-0.35, pH_last_z:-0.25, AST_last_z:-0.25, Unit_MICU:-0.23, BaseExcess_last_z:-0.23, HCO3_n_meas_6h:-0.23, Phosphate_last_z:+0.22\nN15 W2=-0.365 b1=+0.555 | Bilirubin_direct_last_z:-0.60, TroponinI_last_z:-0.51, FiO2_n_meas_6h:-0.45, HCO3_last_z:+0.43, Lactate_last_z:-0.40, HR_last_z:-0.39, Lactate_n_meas_6h:-0.35, WBC_last_z:-0.35\nN28 W2=-0.350 b1=+0.880 | EHR_flag_17:-0.68, FiO2_last_z:+0.42, Unit_SICU:+0.39, Calcium_last_z:-0.31, Alkalinephos_last_z:-0.26, Hgb_last_z:-0.25, SaO2_last_z:+0.25, Resp_last_z:+0.21\nN16 W2=-0.335 b1=+0.313 | Unit_SICU:+0.51, BUN_last_z:-0.48, ICULOS_z:-0.43, WBC_last_z:+0.38, AST_last_z:-0.34, Bilirubin_total_n_meas_6h:-0.32, Unit_MICU:-0.25, Calcium_last_z:+0.20\nN26 W2=+0.315 b1=-0.155 | HospAdmTime_z:+0.27, TroponinI_n_meas_6h:-0.26, HCO3_last_z:+0.25, Age_z:+0.21, Platelets_last_z:-0.20, Unit_MICU:-0.20, Fibrinogen_last_z:-0.20, PTT_last_z:-0.18\nN31 W2=-0.283 b1=+0.361 | ICULOS_z:-0.50, EHR_flag_17:-0.38, Unit_SICU:+0.36, Unit_MICU:-0.32, Fibrinogen_last_z:+0.27, Magnesium_last_z:+0.25, Hct_last_z:-0.22, Chloride_last_z:+0.21\nN23 W2=-0.279 b1=+0.439 | PTT_last_z:-0.48, Creatinine_last_z:-0.43, EHR_flag_17:-0.33, SaO2_last_z:+0.32, Fibrinogen_last_z:-0.26, Unit_SICU:+0.25, BUN_last_z:-0.24, Temp_last_z:-0.19\nN 3 W2=+0.268 b1=-0.003 | Phosphate_last_z:-0.37, Calcium_last_z:-0.27, Temp_last_z:-0.27, Glucose_last_z:+0.24, TroponinI_n_meas_6h:-0.18, Platelets_last_z:-0.17, Lactate_last_z:-0.17, PaCO2_last_z:-0.17\nN29 W2=-0.254 b1=+0.462 | ICULOS_z:-0.43, BaseExcess_last_z:-0.40, Unit_SICU:+0.39, FiO2_last_z:+0.37, Platelets_last_z:-0.36, PTT_last_z:+0.35, WBC_last_z:-0.32, BUN_last_z:-0.32\nN 9 W2=-0.247 b1=+0.047 | TroponinI_n_meas_6h:+0.42, Age_z:+0.34, Alkalinephos_last_z:+0.23, SBP_last_z:+0.21, Lactate_n_meas_6h:+0.19, Creatinine_last_z:+0.19, pH_n_meas_6h:+0.18, PaCO2_last_z:-0.18\nN 2 W2=+0.246 b1=-0.129 | MAP_last_z:+0.31, WBC_last_z:+0.24, TroponinI_n_meas_6h:-0.21, HospAdmTime_z:+0.20, Bilirubin_direct_n_meas_6h:-0.20, Bilirubin_total_last_z:-0.17, Fibrinogen_last_z:+0.16, Resp_last_z:+0.15\nN14 W2=-0.245 b1=+0.366 | Fibrinogen_n_meas_6h:-0.42, FiO2_n_meas_6h:-0.37, SaO2_last_z:+0.35, FiO2_last_z:-0.34, Lactate_n_meas_6h:-0.32, BUN_last_z:-0.32, BaseExcess_n_meas_6h:-0.32, Lactate_last_z:+0.30\nN 5 W2=-0.241 b1=+0.347 | WBC_last_z:+0.35, Unit_SICU:+0.32, PTT_last_z:-0.31, EHR_flag_17:-0.31, Gender_male:-0.30, ICULOS_z:-0.28, O2Sat_last_z:+0.25, Fibrinogen_last_z:+0.25\nN18 W2=+0.237 b1=-0.268 | Temp_last_z:+1.00, Platelets_last_z:-0.44, HCO3_last_z:+0.40, Lactate_last_z:-0.29, SBP_last_z:+0.29, TroponinI_n_meas_6h:+0.26, Bilirubin_direct_last_z:-0.25, Age_z:-0.24\nN 0 W2=-0.223 b1=+0.687 | Unit_MICU:-0.55, Calcium_last_z:+0.39, Platelets_last_z:-0.38, SaO2_last_z:-0.35, Unit_SICU:+0.34, Magnesium_last_z:+0.31, Hct_last_z:-0.31, Chloride_last_z:-0.29\nN24 W2=-0.219 b1=+0.223 | PTT_last_z:-0.53, SaO2_last_z:+0.37, FiO2_last_z:-0.29, HCO3_last_z:+0.27, Fibrinogen_last_z:-0.26, Temp_last_z:-0.24, EHR_flag_17:-0.23, WBC_last_z:-0.20\nN12 W2=-0.211 b1=+0.198 | HospAdmTime_z:+0.38, WBC_last_z:-0.37, MAP_last_z:+0.30, EHR_flag_17:-0.27, O2Sat_last_z:+0.23, Alkalinephos_last_z:-0.23, SaO2_n_meas_6h:-0.23, Lactate_n_meas_6h:-0.21\nN11 W2=-0.205 b1=+0.328 | PTT_last_z:-0.35, ICULOS_z:-0.31, EHR_flag_17:-0.30, MAP_last_z:+0.20, Creatinine_last_z:+0.18, Lactate_last_z:+0.18, HCO3_last_z:-0.18, Temp_last_z:-0.17\nN 7 W2=-0.195 b1=+0.393 | Lactate_n_meas_6h:-0.39, HospAdmTime_z:+0.39, Hct_last_z:-0.34, WBC_last_z:-0.34, Bilirubin_total_last_z:-0.33, HR_last_z:-0.31, Calcium_last_z:+0.27, SaO2_n_meas_6h:-0.27\nN20 W2=-0.187 b1=+0.195 | Platelets_last_z:-0.41, PTT_last_z:+0.41, Unit_MICU:-0.37, ICULOS_z:-0.35, Fibrinogen_last_z:+0.33, EHR_flag_17:-0.31, HR_last_z:+0.30, O2Sat_last_z:-0.29\nN17 W2=-0.185 b1=+0.260 | Age_z:+0.36, Fibrinogen_last_z:-0.34, HR_last_z:-0.28, MAP_last_z:+0.24, Lactate_last_z:-0.24, ICULOS_z:-0.23, Lactate_n_meas_6h:-0.21, Magnesium_last_z:+0.20\nN 4 W2=+0.181 b1=-0.131 | Temp_last_z:+0.32, Hgb_last_z:-0.26, Chloride_last_z:+0.22, Age_z:-0.22, ICULOS_z:+0.19, Alkalinephos_last_z:+0.17, Fibrinogen_n_meas_6h:+0.16, O2Sat_last_z:-0.15\nN21 W2=-0.178 b1=+0.185 | ICULOS_z:-0.40, Lactate_last_z:-0.34, Platelets_last_z:-0.26, Unit_MICU:-0.26, Unit_SICU:+0.24, Magnesium_last_z:+0.22, EHR_flag_17:-0.22, TroponinI_n_meas_6h:+0.20\nN13 W2=+0.158 b1=-0.075 | HR_last_z:-0.13, Alkalinephos_n_meas_6h:-0.13, TroponinI_n_meas_6h:-0.12, Hgb_n_meas_6h:-0.12, MAP_last_z:+0.10, MAP_n_meas_6h:-0.10, EtCO2_n_meas_6h:+0.10, ICULOS_z:-0.09\nN 1 W2=+0.157 b1=-0.051 | Platelets_last_z:-0.23, WBC_last_z:-0.22, TroponinI_n_meas_6h:-0.22, Bilirubin_total_last_z:+0.19, Fibrinogen_last_z:-0.19, HCO3_last_z:+0.19, Bilirubin_direct_n_meas_6h:-0.17, BUN_last_z:+0.17\nN 6 W2=-0.120 b1=+0.166 | ICULOS_z:-0.51, FiO2_last_z:-0.32, EHR_flag_17:-0.26, Chloride_last_z:-0.21, Unit_SICU:+0.21, HR_last_z:+0.21, BaseExcess_last_z:-0.17, Potassium_last_z:-0.17\nN25 W2=-0.103 b1=+0.242 | EHR_flag_17:-0.41, FiO2_last_z:-0.36, HospAdmTime_z:+0.29, AST_last_z:-0.29, PTT_last_z:-0.29, HR_last_z:-0.27, Resp_last_z:-0.27, TroponinI_last_z:-0.27\nN27 W2=+0.073 b1=-0.126 | Bilirubin_direct_n_meas_6h:-0.41, Calcium_last_z:+0.38, Creatinine_last_z:-0.35, Hct_last_z:+0.29, Hgb_last_z:+0.28, SaO2_last_z:+0.27, Fibrinogen_last_z:+0.25, MAP_last_z:+0.25\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 4,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nnp.set_printoptions(precision=3, suppress=True, linewidth=200)\nm = np.load('model.npz'); W1, b1, W2, b2 = m['W1'], m['b1'], m['W2'], float(m['b2'])\nf = json.load(open('features.json')); names=[x['name'] for x in f]\ndef col(name):\n    i = names.index(name); c = W1[:,i]\n    print(f'--- {name}: eff={W2@c:+.3f}; per-neuron W2*W1 (sorted):')\n    o = np.argsort(-np.abs(W2*c))[:12]\n    print(', '.join(f'N{j}:{W2[j]*c[j]:+.3f}(w={c[j]:+.2f})' for j in o))\n    print('n neurons with same-sign contribution:', np.sum(np.sign(W2*c)==np.sign(W2@c)), '/32')\nfor n in ['EHR_flag_17','ICULOS_z','Unit_SICU','Unit_MICU','HospAdmTime_z','Age_z','Gender_male','Lactate_n_meas_6h','TroponinI_n_meas_6h','Bilirubin_total_n_meas_6h','AST_n_meas_6h','Temp_last_z','HR_last_z','Lactate_last_z','WBC_last_z','SaO2_last_z','PTT_last_z']:\n    col(n)\n"
+     },
+     "output": "--- EHR_flag_17: eff=+1.476; per-neuron W2*W1 (sorted):\nN28:+0.237(w=-0.68), N19:+0.109(w=+0.23), N31:+0.108(w=-0.38), N23:+0.092(w=-0.33), N15:+0.079(w=-0.22), N29:+0.077(w=-0.30), N8:+0.074(w=-0.10), N5:+0.074(w=-0.31), N10:+0.064(w=-0.12), N22:+0.063(w=+0.15), N0:+0.062(w=-0.28), N11:+0.061(w=-0.30)\nn neurons with same-sign contribution: 27 /32\n--- ICULOS_z: eff=+1.531; per-neuron W2*W1 (sorted):\nN10:+0.190(w=-0.37), N16:+0.145(w=-0.43), N31:+0.141(w=-0.50), N19:+0.136(w=+0.29), N8:+0.130(w=-0.17), N29:+0.109(w=-0.43), N21:+0.072(w=-0.40), N5:+0.067(w=-0.28), N20:+0.066(w=-0.35), N11:+0.063(w=-0.31), N6:+0.061(w=-0.51), N0:+0.060(w=-0.27)\nn neurons with same-sign contribution: 26 /32\n--- Unit_SICU: eff=-1.424; per-neuron W2*W1 (sorted):\nN10:-0.333(w=+0.64), N8:-0.186(w=+0.25), N16:-0.172(w=+0.51), N28:-0.138(w=+0.39), N31:-0.103(w=+0.36), N29:-0.099(w=+0.39), N5:-0.077(w=+0.32), N0:-0.075(w=+0.34), N15:-0.071(w=+0.20), N23:-0.069(w=+0.25), N30:+0.056(w=+0.14), N21:-0.043(w=+0.24)\nn neurons with same-sign contribution: 22 /32\n--- Unit_MICU: eff=+0.175; per-neuron W2*W1 (sorted):\nN8:-0.216(w=+0.29), N0:+0.123(w=-0.55), N30:-0.096(w=-0.23), N31:+0.091(w=-0.32), N15:+0.088(w=-0.24), N16:+0.083(w=-0.25), N20:+0.070(w=-0.37), N10:+0.064(w=-0.12), N26:-0.063(w=-0.20), N28:+0.059(w=-0.17), N18:-0.056(w=-0.23), N21:+0.046(w=-0.26)\nn neurons with same-sign contribution: 19 /32\n--- HospAdmTime_z: eff=-0.328; per-neuron W2*W1 (sorted):\nN10:-0.321(w=+0.62), N19:+0.088(w=+0.18), N26:+0.086(w=+0.27), N22:+0.084(w=+0.21), N12:-0.079(w=+0.38), N7:-0.075(w=+0.39), N29:-0.057(w=+0.23), N15:-0.056(w=+0.15), N16:+0.053(w=-0.16), N2:+0.049(w=+0.20), N14:-0.036(w=+0.14), N9:+0.035(w=-0.14)\nn neurons with same-sign contribution: 19 /32\n--- Age_z: eff=+0.295; per-neuron W2*W1 (sorted):\nN10:+0.255(w=-0.49), N8:+0.184(w=-0.24), N9:-0.083(w=+0.34), N17:-0.067(w=+0.36), N26:+0.066(w=+0.21), N16:+0.062(w=-0.18), N18:-0.056(w=-0.24), N28:-0.053(w=+0.15), N14:+0.049(w=-0.20), N19:+0.048(w=+0.10), N7:-0.046(w=+0.23), N22:+0.042(w=+0.10)\nn neurons with same-sign contribution: 14 /32\n--- Gender_male: eff=-0.068; per-neuron W2*W1 (sorted):\nN8:-0.123(w=+0.16), N5:+0.073(w=-0.30), N10:-0.064(w=+0.12), N15:+0.062(w=-0.17), N22:+0.050(w=+0.12), N14:+0.047(w=-0.19), N26:-0.036(w=-0.11), N2:-0.033(w=-0.13), N19:-0.030(w=-0.06), N16:-0.030(w=+0.09), N11:+0.029(w=-0.14), N0:-0.026(w=+0.12)\nn neurons with same-sign contribution: 17 /32\n--- Lactate_n_meas_6h: eff=+0.644; per-neuron W2*W1 (sorted):\nN8:+0.136(w=-0.18), N15:+0.130(w=-0.35), N14:+0.079(w=-0.32), N7:+0.076(w=-0.39), N28:+0.055(w=-0.16), N16:+0.053(w=-0.16), N9:-0.046(w=+0.19), N12:+0.045(w=-0.21), N26:-0.039(w=-0.12), N17:+0.039(w=-0.21), N19:+0.039(w=+0.08), N29:+0.038(w=-0.15)\nn neurons with same-sign contribution: 19 /32\n--- TroponinI_n_meas_6h: eff=-0.540; per-neuron W2*W1 (sorted):\nN19:-0.302(w=-0.63), N22:-0.276(w=-0.67), N10:+0.110(w=-0.21), N9:-0.103(w=+0.42), N26:-0.082(w=-0.26), N18:+0.061(w=+0.26), N30:+0.059(w=+0.14), N14:+0.056(w=-0.23), N16:+0.055(w=-0.16), N2:-0.053(w=-0.21), N3:-0.047(w=-0.18), N15:-0.046(w=+0.13)\nn neurons with same-sign contribution: 17 /32\n--- Bilirubin_total_n_meas_6h: eff=+0.562; per-neuron W2*W1 (sorted):\nN16:+0.106(w=-0.32), N15:+0.106(w=-0.29), N8:+0.053(w=-0.07), N14:+0.040(w=-0.16), N22:+0.038(w=+0.09), N30:+0.037(w=+0.09), N9:-0.034(w=+0.14), N18:-0.030(w=-0.13), N7:+0.030(w=-0.15), N21:+0.030(w=-0.17), N28:+0.030(w=-0.08), N24:+0.027(w=-0.12)\nn neurons with same-sign contribution: 24 /32\n--- AST_n_meas_6h: eff=+0.420; per-neuron W2*W1 (sorted):\nN8:+0.147(w=-0.20), N15:+0.097(w=-0.27), N22:-0.093(w=-0.23), N19:+0.063(w=+0.13), N28:+0.056(w=-0.16), N10:+0.053(w=-0.10), N7:+0.039(w=-0.20), N0:+0.038(w=-0.17), N18:-0.035(w=-0.15), N30:+0.032(w=+0.08), N5:-0.031(w=+0.13), N20:+0.024(w=-0.13)\nn neurons with same-sign contribution: 21 /32\n--- Temp_last_z: eff=+0.233; per-neuron W2*W1 (sorted):\nN18:+0.236(w=+1.00), N22:-0.102(w=-0.25), N3:-0.072(w=-0.27), N15:+0.058(w=-0.16), N10:-0.057(w=+0.11), N4:+0.057(w=+0.32), N19:-0.054(w=-0.11), N23:+0.053(w=-0.19), N24:+0.052(w=-0.24), N30:-0.049(w=-0.12), N26:-0.037(w=-0.12), N2:+0.037(w=+0.15)\nn neurons with same-sign contribution: 18 /32\n--- HR_last_z: eff=+0.534; per-neuron W2*W1 (sorted):\nN15:+0.143(w=-0.39), N10:+0.126(w=-0.24), N19:+0.109(w=+0.23), N22:+0.078(w=+0.19), N30:+0.062(w=+0.15), N7:+0.061(w=-0.31), N16:-0.059(w=+0.18), N20:-0.055(w=+0.30), N17:+0.052(w=-0.28), N14:+0.047(w=-0.19), N28:-0.041(w=+0.12), N29:-0.035(w=+0.14)\nn neurons with same-sign contribution: 16 /32\n--- Lactate_last_z: eff=+0.071; per-neuron W2*W1 (sorted):\nN15:+0.145(w=-0.40), N14:-0.075(w=+0.30), N18:-0.070(w=-0.29), N21:+0.061(w=-0.34), N28:-0.047(w=+0.13), N16:+0.047(w=-0.14), N3:-0.047(w=-0.17), N17:+0.045(w=-0.24), N10:-0.043(w=+0.08), N29:+0.038(w=-0.15), N11:-0.037(w=+0.18), N12:+0.036(w=-0.17)\nn neurons with same-sign contribution: 16 /32\n--- WBC_last_z: eff=+0.473; per-neuron W2*W1 (sorted):\nN19:+0.212(w=+0.44), N15:+0.129(w=-0.35), N16:-0.126(w=+0.38), N22:+0.102(w=+0.25), N5:-0.085(w=+0.35), N29:+0.081(w=-0.32), N12:+0.078(w=-0.37), N7:+0.066(w=-0.34), N14:+0.063(w=-0.26), N2:+0.059(w=+0.24), N28:-0.057(w=+0.16), N31:-0.053(w=+0.19)\nn neurons with same-sign contribution: 17 /32\n--- SaO2_last_z: eff=-0.373; per-neuron W2*W1 (sorted):\nN10:-0.261(w=+0.51), N23:-0.090(w=+0.32), N28:-0.088(w=+0.25), N14:-0.087(w=+0.35), N30:+0.085(w=+0.21), N24:-0.080(w=+0.37), N0:+0.079(w=-0.35), N29:-0.063(w=+0.25), N31:+0.054(w=-0.19), N5:+0.049(w=-0.20), N16:+0.047(w=-0.14), N20:+0.044(w=-0.24)\nn neurons with same-sign contribution: 17 /32\n--- PTT_last_z: eff=+0.515; per-neuron W2*W1 (sorted):\nN10:+0.494(w=-0.96), N23:+0.134(w=-0.48), N24:+0.115(w=-0.53), N15:+0.102(w=-0.28), N8:-0.095(w=+0.13), N29:-0.088(w=+0.35), N20:-0.076(w=+0.41), N5:+0.074(w=-0.31), N11:+0.073(w=-0.35), N26:-0.056(w=-0.18), N16:-0.046(w=+0.14), N12:-0.044(w=+0.21)\nn neurons with same-sign contribution: 15 /32\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 5,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nnp.set_printoptions(precision=3, suppress=True, linewidth=200)\nm = np.load('model.npz'); W1, b1, W2, b2 = m['W1'], m['b1'], m['W2'], float(m['b2'])\nf = json.load(open('features.json')); names=[x['name'] for x in f]\neff = W2@W1\nprint('All last_z effs:')\nfor i in range(34): print(f'{names[i]:26s} {eff[i]:+.3f}', end=' | ' if i%3!=2 else '\\n')\nprint('\\nAll n_meas effs:')\nfor i in range(34,68): print(f'{names[i]:28s} {eff[i]:+.3f}', end=' | ' if i%3!=2 else '\\n')\nprint('\\nStructure: neurons with W2<0 and b1>0 (default-on protective):', [j for j in range(32) if W2[j]<0 and b1[j]>0])\nprint('neurons W2>0:', [j for j in range(32) if W2[j]>0], 'b1 of them', b1[W2>0])\n# cosine similarity between input columns in W1 space\ndef cos(a,b):\n    a=W1[:,names.index(a)]; b=W1[:,names.index(b)]; return a@b/np.linalg.norm(a)/np.linalg.norm(b)\nfor p in [('EHR_flag_17','ICULOS_z'),('EHR_flag_17','Unit_SICU'),('ICULOS_z','Unit_SICU'),('EHR_flag_17','Lactate_n_meas_6h'),('Unit_SICU','Unit_MICU'),('Hct_last_z','Hgb_last_z'),('SBP_last_z','MAP_last_z')]:\n    print(p, f'{cos(*p):+.3f}')\n# sum of weights across all n_meas columns per neuron\nnm = W1[:,34:68].sum(1)\nprint('sum n_meas weights per neuron * W2:', np.round(W2*nm,3))\nprint('total eff of all n_meas:', (W2*nm).sum())\n"
+     },
+     "output": "All last_z effs:\nHR_last_z                  +0.534 | O2Sat_last_z               -0.011 | Temp_last_z                +0.233\nSBP_last_z                 +0.079 | MAP_last_z                 -0.071 | DBP_last_z                 -0.277\nResp_last_z                +0.333 | EtCO2_last_z               -0.078 | BaseExcess_last_z          +0.033\nHCO3_last_z                +0.202 | FiO2_last_z                +0.243 | pH_last_z                  -0.315\nPaCO2_last_z               +0.020 | SaO2_last_z                -0.373 | AST_last_z                 -0.012\nBUN_last_z                 +0.476 | Alkalinephos_last_z        +0.038 | Calcium_last_z             -0.213\nChloride_last_z            +0.227 | Creatinine_last_z          +0.398 | Bilirubin_direct_last_z    +0.404\nGlucose_last_z             +0.073 | Lactate_last_z             +0.071 | Magnesium_last_z           -0.012\nPhosphate_last_z           -0.246 | Potassium_last_z           -0.136 | Bilirubin_total_last_z     +0.060\nTroponinI_last_z           +0.239 | Hct_last_z                 +0.063 | Hgb_last_z                 +0.146\nPTT_last_z                 +0.515 | WBC_last_z                 +0.473 | Fibrinogen_last_z          -0.055\nPlatelets_last_z           -0.012 | \nAll n_meas effs:\nHR_n_meas_6h                 -0.349 | O2Sat_n_meas_6h              -0.072\nTemp_n_meas_6h               -0.078 | SBP_n_meas_6h                -0.281 | MAP_n_meas_6h                +0.181\nDBP_n_meas_6h                +0.011 | Resp_n_meas_6h               +0.051 | EtCO2_n_meas_6h              +0.003\nBaseExcess_n_meas_6h         +0.302 | HCO3_n_meas_6h               +0.066 | FiO2_n_meas_6h               +0.325\npH_n_meas_6h                 -0.075 | PaCO2_n_meas_6h              +0.132 | SaO2_n_meas_6h               +0.027\nAST_n_meas_6h                +0.420 | BUN_n_meas_6h                -0.215 | Alkalinephos_n_meas_6h       -0.158\nCalcium_n_meas_6h            -0.021 | Chloride_n_meas_6h           -0.348 | Creatinine_n_meas_6h         -0.197\nBilirubin_direct_n_meas_6h   +0.157 | Glucose_n_meas_6h            -0.175 | Lactate_n_meas_6h            +0.644\nMagnesium_n_meas_6h          +0.080 | Phosphate_n_meas_6h          +0.044 | Potassium_n_meas_6h          +0.143\nBilirubin_total_n_meas_6h    +0.562 | TroponinI_n_meas_6h          -0.540 | Hct_n_meas_6h                -0.242\nHgb_n_meas_6h                +0.026 | PTT_n_meas_6h                +0.089 | WBC_n_meas_6h                +0.301\nFibrinogen_n_meas_6h         +0.325 | Platelets_n_meas_6h          -0.193 | \nStructure: neurons with W2<0 and b1>0 (default-on protective): [0, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 20, 21, 23, 24, 25, 28, 29, 31]\nneurons W2>0: [1, 2, 3, 4, 13, 18, 19, 22, 26, 27, 30] b1 of them [-0.051 -0.129 -0.003 -0.131 -0.075 -0.268 -0.094 -0.287 -0.155 -0.126 -0.171]\n('EHR_flag_17', 'ICULOS_z') +0.617\n('EHR_flag_17', 'Unit_SICU') -0.726\n('ICULOS_z', 'Unit_SICU') -0.721\n('EHR_flag_17', 'Lactate_n_meas_6h') +0.501\n('Unit_SICU', 'Unit_MICU') -0.591\n('Hct_last_z', 'Hgb_last_z') +0.702\n('SBP_last_z', 'MAP_last_z') +0.411\nsum n_meas weights per neuron * W2: [-0.061 -0.143 -0.19  -0.103 -0.037  0.075 -0.027  0.21   0.594 -0.156  0.463 -0.162  0.249 -0.124  0.571  0.722  0.566 -0.011 -0.068 -0.356  0.278  0.019 -0.37  -0.124 -0.197  0.011 -0.322 -0.066\n  0.444 -0.108 -0.579 -0.057]\ntotal eff of all n_meas: 0.9421996\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 6,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "submit_report",
+     "input": {
+      "summary": "Il modello ha una struttura a \"neuroni protettivi di default\": 21/32 neuroni hanno W2<0 e bias positivo, quindi sono attivi in condizioni basali e abbassano il logit; le feature di rischio agiscono spegnendoli. Gli 11 neuroni con W2>0 (bias negativo) si accendono su pattern specifici (N18: febbre+piastrinopenia; N19/N22: leucocitosi in assenza di workup troponinico). Analizzando il contributo netto W2·W1 per feature, i tre predittori dominanti NON sono fisiologici: ICULOS_z (ore dall'ingresso in ICU, +1.53), EHR_flag_17 (flag binario non documentato, +1.48, coerente su 27/32 neuroni) e Unit_SICU (-1.42); queste tre colonne sono fortemente allineate nello spazio dei neuroni (cos 0.6-0.7) e vengono combinate dagli stessi neuroni protettivi (N10, N16, N28, N31, N23, N29, N5, N11). Un secondo blocco importante è costituito dai conteggi di misurazione (comportamento dei clinici): Lactate_n_meas (+0.64), Bilirubin_total_n_meas (+0.56), AST_n_meas (+0.42), FiO2/Fibrinogen/BaseExcess/WBC_n_meas (~+0.3) aumentano il rischio, mentre TroponinI_n_meas (-0.54, neuroni 19 e 22) lo riduce: il modello ha imparato \"se stanno facendo un workup settico/epatico -> sepsi; se fanno un workup cardiaco -> non sepsi\". Il segnale fisiologico esiste ed e' clinicamente coerente ma secondario: HR (+0.53), PTT (+0.52), BUN (+0.48), WBC (+0.47), bilirubina diretta (+0.40), creatinina (+0.40), Resp (+0.33), pH basso, SaO2 bassa, DBP bassa, Temp alta (quasi interamente via N18, peso +1.0), eta' (+0.30), lungo soggiorno pre-ICU (HospAdmTime, via N10). Sorprendente: il valore del lattato (Lactate_last_z) ha effetto netto quasi nullo (+0.07) con segni discordanti tra neuroni: il modello usa la frequenza di dosaggio del lattato invece del suo valore. In sintesi, una parte rilevante della capacita' predittiva sembra derivare da artefatti del dataset (tempo di degenza, flag EHR, reparto) e da proxy del comportamento clinico, con rischio di scarsa generalizzazione e di prestazioni gonfiate.",
+      "hypotheses": [
+       {
+        "id": "H1",
+        "title": "EHR_flag_17: possibile leakage dell'etichetta tramite flag non documentato",
+        "description": "EHR_flag_17 e' il secondo predittore per effetto netto (+1.48) ed e' usato in modo coerente da 27/32 neuroni, soprattutto spegnendo i neuroni protettivi N28 (w=-0.68), N31, N23, N5, N11, N29, N0 e accendendo N19/N22. Un indicatore binario di significato ignoto con un effetto cosi' grande e monotono e' tipico di una variabile che codifica un'azione clinica legata alla definizione stessa di sepsi (es. ordine di emocolture/antibiotici, attivazione di un protocollo sepsi). La sua colonna e' inoltre allineata a ICULOS (cos +0.62) e anti-allineata a Unit_SICU (cos -0.73): i neuroni la trattano come parte di un unico pattern 'contesto non fisiologico'.",
+        "clinically_suspicious": true,
+        "features": [
+         "EHR_flag_17"
+        ],
+        "neurons": [
+         28,
+         31,
+         23,
+         5,
+         11,
+         29,
+         0,
+         19,
+         22,
+         15,
+         10,
+         8
+        ],
+        "effect_direction": "increases_risk",
+        "confidence": 0.85,
+        "intervention": {
+         "type": "zero_input_weights",
+         "features": [
+          "EHR_flag_17"
+         ],
+         "neurons": [],
+         "value": 0,
+         "direction": [],
+         "rationale": "Rimuovere completamente la lettura del flag: se il flag e' un leak, la performance (AUROC/AUPRC) cala molto e le predizioni nelle ore con flag=1 crollano; se e' solo correlato debolmente, il calo e' modesto.l'intervento clamp_input a 0 e' equivalente in pratica.'' ''"
+        },
+        "expected_result": "Calo marcato di AUROC/AUPRC (soprattutto nelle ore immediatamente precedenti l'etichetta) e forte riduzione della probabilita' predetta nelle ore con flag=1; inoltre, se il flag e' un leak, la distribuzione temporale del flag dovrebbe concentrarsi proprio nelle 6 ore prima della sepsi."
+       },
+       {
+        "id": "H2",
+        "title": "Dipendenza dal tempo di degenza (ICULOS_z): il rischio cresce con le ore in ICU",
+        "description": "ICULOS_z e' il predittore con il maggiore effetto netto (+1.53), coerente su 26/32 neuroni: spegne i neuroni protettivi N10 (w=-0.37), N16 (-0.43), N31 (-0.50), N6 (-0.51), N29, N21, N20, N11 e accende N19 (+0.29). Il modello ha quindi imparato che 'piu' a lungo il paziente e' in ICU, piu' probabile e' la sepsi'. E' un artefatto noto dei dataset orari di sepsi (i pazienti settici hanno degenze piu' lunghe e l'etichetta positiva compare tardi), non un meccanismo fisiologico; porta a sovrastimare il rischio nei lungodegenti stabili e a sottostimarlo nelle prime ore.",
+        "clinically_suspicious": true,
+        "features": [
+         "ICULOS_z"
+        ],
+        "neurons": [
+         10,
+         16,
+         31,
+         19,
+         8,
+         29,
+         21,
+         5,
+         20,
+         11,
+         6,
+         0
+        ],
+        "effect_direction": "increases_risk",
+        "confidence": 0.8,
+        "intervention": {
+         "type": "clamp_input",
+         "features": [
+          "ICULOS_z"
+         ],
+         "neurons": [],
+         "value": 0,
+         "direction": [],
+         "rationale": "Fissare ICULOS al valore medio (z=0) elimina la monotonia temporale pur lasciando i neuroni nel loro regime operativo tipico. Confrontare la calibrazione per fasce di ICULOS prima/dopo."
+        },
+        "expected_result": "Le probabilita' predette non crescono piu' con l'ora di degenza; calo dell'AUROC globale (parte del segnale era il tempo) ma AUROC entro fasce di ICULOS pressoche' invariata; migliore calibrazione nelle prime ore e nei lungodegenti."
+       },
+       {
+        "id": "H3",
+        "title": "Bias di reparto: Unit_SICU abbassa fortemente il rischio, Unit_MICU lo alza",
+        "description": "Unit_SICU ha effetto netto -1.42 (terzo in valore assoluto), concentrato sui neuroni protettivi N10 (w=+0.64), N16 (+0.51), N28, N31, N29, N8, N5, N0, che vengono tenuti accesi dalla SICU. Unit_MICU ha effetto +0.18 ma con segni discordanti (N8 lo usa in senso protettivo, N0/N31/N15 in senso di rischio). Il reparto funziona come un prior di prevalenza (e, dato che i pazienti con unita' mancante sono una terza categoria, probabilmente anche come identificatore di ospedale). Sospetto perche' non trasferibile ad altri centri e perche' puo' mascherare sepsi post-chirurgiche.",
+        "clinically_suspicious": true,
+        "features": [
+         "Unit_SICU",
+         "Unit_MICU"
+        ],
+        "neurons": [
+         10,
+         16,
+         28,
+         31,
+         29,
+         8,
+         5,
+         0,
+         15,
+         23
+        ],
+        "effect_direction": "decreases_risk",
+        "confidence": 0.7,
+        "intervention": {
+         "type": "zero_input_weights",
+         "features": [
+          "Unit_SICU",
+          "Unit_MICU"
+         ],
+         "neurons": [],
+         "value": 0,
+         "direction": [],
+         "rationale": "Eliminare l'informazione di reparto e misurare AUROC globale vs AUROC stratificata per reparto: se il modello usa il reparto solo come prior, l'AUROC entro reparto non cambia mentre quella globale cala."
+        },
+        "expected_result": "Aumento sistematico del rischio predetto nei pazienti SICU e lieve riduzione nei MICU; calo dell'AUROC globale ma AUROC entro-reparto sostanzialmente invariata; miglior sensibilita' per le sepsi in SICU."
+       },
+       {
+        "id": "H4",
+        "title": "Proxy del comportamento clinico: frequenza di esami (lattato, bilirubina, AST, FiO2, fibrinogeno, BE, WBC) come segnale di 'sospetto clinico'",
+        "description": "I conteggi di misurazione nelle ultime 6 ore hanno effetto netto complessivo +0.94. In particolare Lactate_n_meas (+0.64, 19/32 neuroni concordi: N8, N15, N14, N7, N28, N16), Bilirubin_total_n_meas (+0.56, 24/32: N16, N15), AST_n_meas (+0.42), FiO2_n_meas (+0.33), Fibrinogen_n_meas (+0.33), BaseExcess_n_meas (+0.30), WBC_n_meas (+0.30). Il modello ha imparato che quando i clinici ordinano un workup da sepsi/SOFA (lattato, funzione epatica, coagulazione, emogas) la sepsi e' imminente. E' un segnale reale ma circolare: dipende dalle pratiche locali, non funziona come allerta precoce (il clinico ha gia' il sospetto) e fallisce dove i protocolli di prelievo differiscono.",
+        "clinically_suspicious": true,
+        "features": [
+         "Lactate_n_meas_6h",
+         "Bilirubin_total_n_meas_6h",
+         "AST_n_meas_6h",
+         "FiO2_n_meas_6h",
+         "Fibrinogen_n_meas_6h",
+         "BaseExcess_n_meas_6h",
+         "WBC_n_meas_6h",
+         "Bilirubin_direct_n_meas_6h",
+         "MAP_n_meas_6h",
+         "PaCO2_n_meas_6h"
+        ],
+        "neurons": [
+         8,
+         15,
+         14,
+         7,
+         16,
+         28,
+         10,
+         12,
+         22,
+         19
+        ],
+        "effect_direction": "increases_risk",
+        "confidence": 0.75,
+        "intervention": {
+         "type": "zero_input_weights",
+         "features": [
+          "Lactate_n_meas_6h",
+          "Bilirubin_total_n_meas_6h",
+          "AST_n_meas_6h",
+          "FiO2_n_meas_6h",
+          "Fibrinogen_n_meas_6h",
+          "BaseExcess_n_meas_6h",
+          "WBC_n_meas_6h",
+          "Bilirubin_direct_n_meas_6h",
+          "MAP_n_meas_6h",
+          "PaCO2_n_meas_6h"
+         ],
+         "neurons": [],
+         "value": 0,
+         "direction": [],
+         "rationale": "Azzerare i conteggi con effetto positivo isola il contributo del 'workup clinico' rispetto ai valori di laboratorio veri e propri (che restano letti)."
+        },
+        "expected_result": "Calo sensibile di AUPRC, concentrato nelle ore in cui vengono prelevati lattato/bilirubina/AST; il rischio predetto diventa piu' dipendente dai valori fisiologici; la distanza tra predizioni di pazienti con e senza prelievi recenti si riduce molto."
+       },
+       {
+        "id": "H5",
+        "title": "Workup troponinico come 'esclusione' di sepsi (TroponinI_n_meas_6h riduce il rischio)",
+        "description": "TroponinI_n_meas_6h ha effetto netto -0.54, dovuto quasi interamente ai due neuroni eccitatori N19 (w=-0.63, W2=+0.48) e N22 (w=-0.67, W2=+0.41), che codificano 'WBC alto + nessun dosaggio di troponina' -> sepsi, oltre a N9 (+0.42 su neurone protettivo). Il modello ha appreso una diagnosi differenziale per comportamento del clinico: se si cerca una causa cardiaca, non e' sepsi. Ma troponina elevata e dosata e' frequente nella sepsi (miocardiopatia settica, pazienti cardiopatici): il meccanismo puo' causare falsi negativi proprio nei pazienti piu' fragili. Nota: il valore TroponinI_last_z ha invece effetto positivo (+0.24), coerente con l'organo-danno.",
+        "clinically_suspicious": true,
+        "features": [
+         "TroponinI_n_meas_6h"
+        ],
+        "neurons": [
+         19,
+         22,
+         9,
+         26
+        ],
+        "effect_direction": "decreases_risk",
+        "confidence": 0.7,
+        "intervention": {
+         "type": "zero_input_weights",
+         "features": [
+          "TroponinI_n_meas_6h"
+         ],
+         "neurons": [],
+         "value": 0,
+         "direction": [],
+         "rationale": "Rimuovere il conteggio troponinico (lasciando il valore) verifica se la soppressione e' un artefatto di ordinazione esami: la sensibilita' nei pazienti con troponina dosata dovrebbe salire."
+        },
+        "expected_result": "Aumento del rischio predetto nelle ore con troponina dosata di recente; miglioramento della sensibilita' nei pazienti settici con workup cardiaco, a fronte di un lieve calo della specificita' globale; N19/N22 si attivano piu' spesso."
+       },
+       {
+        "id": "H6",
+        "title": "Il valore del lattato e' praticamente ignorato (il modello usa solo la frequenza di dosaggio)",
+        "description": "Lactate_last_z ha effetto netto +0.07, con segni discordanti tra neuroni (N15: -0.40 su neurone protettivo -> rischio; N14: +0.30 su protettivo -> protezione; N18: -0.29 su neurone eccitatorio 'febbre' -> protezione). In contrasto Lactate_n_meas_6h ha +0.64. Clinicamente il lattato elevato e' uno dei marker piu' forti di sepsi/shock settico; un modello che non lo usa (o lo usa con segno incoerente) e' sospetto per omissione e suggerisce che il conteggio abbia 'rubato' il segnale. L'ipotesi e' che azzerare il valore cambi poco mentre azzerare il conteggio cambi molto.",
+        "clinically_suspicious": true,
+        "features": [
+         "Lactate_last_z",
+         "Lactate_n_meas_6h"
+        ],
+        "neurons": [
+         15,
+         14,
+         18,
+         21,
+         8,
+         7
+        ],
+        "effect_direction": "mixed",
+        "confidence": 0.6,
+        "intervention": {
+         "type": "zero_input_weights",
+         "features": [
+          "Lactate_last_z"
+         ],
+         "neurons": [],
+         "value": 0,
+         "direction": [],
+         "rationale": "Confronto a coppie: azzerare Lactate_last_z (atteso: variazione minima) vs azzerare Lactate_n_meas_6h (atteso in H4: variazione grande). Se confermato, il modello non sfrutta il contenuto fisiologico del lattato."
+        },
+        "expected_result": "Variazione trascurabile di AUROC/AUPRC azzerando Lactate_last_z; nessun aumento del rischio predetto nei pazienti con lattato molto alto rispetto a quelli con lattato normale ma ugualmente dosato."
+       },
+       {
+        "id": "H7",
+        "title": "Meccanismo fisiologico coerente: SIRS + disfunzione d'organo (HR, Resp, Temp, WBC, BUN/creatinina, bilirubina diretta, PTT, SaO2, pH)",
+        "description": "Il segnale clinicamente plausibile e' presente: HR (+0.53, via N15, N10, N19, N22), Resp (+0.33), Temp (+0.23, quasi interamente dal neurone N18 con peso +1.00 insieme a piastrine basse -0.44), WBC (+0.47, N19/N22/N15), PTT (+0.52, soprattutto N10 w=-0.96), BUN (+0.48), creatinina (+0.40), bilirubina diretta (+0.40, N8/N15), SaO2 bassa (-0.37), pH basso (-0.32), DBP bassa (-0.28), eta' (+0.30), degenza pre-ICU lunga (HospAdmTime, via N10). N10 (W2=-0.52, b1=0.73) e' un neurone 'protettivo' spento da coagulopatia + insufficienza renale + troponina alta + eta'. Questo blocco non e' sospetto, ma e' quantitativamente inferiore ai fattori di contesto (H1-H4).",
+        "clinically_suspicious": false,
+        "features": [
+         "HR_last_z",
+         "Resp_last_z",
+         "Temp_last_z",
+         "WBC_last_z",
+         "PTT_last_z",
+         "BUN_last_z",
+         "Creatinine_last_z",
+         "Bilirubin_direct_last_z",
+         "SaO2_last_z",
+         "pH_last_z",
+         "DBP_last_z",
+         "Age_z"
+        ],
+        "neurons": [
+         10,
+         15,
+         18,
+         19,
+         22,
+         8,
+         23,
+         24,
+         30
+        ],
+        "effect_direction": "increases_risk",
+        "confidence": 0.75,
+        "intervention": {
+         "type": "ablate_neurons",
+         "features": [],
+         "neurons": [
+          10,
+          18,
+          19,
+          22
+         ],
+         "value": 0,
+         "direction": [],
+         "rationale": "N10 (coagulopatia/renale/eta'), N18 (febbre+piastrinopenia) e N19/N22 (leucocitosi) sono i neuroni che veicolano la maggior parte del segnale fisiologico. Ablandoli si misura quanta performance deriva dalla fisiologia rispetto al contesto; se la performance resta alta, il modello dipende soprattutto dagli artefatti H1-H4."
+        },
+        "expected_result": "Calo moderato di AUROC/AUPRC (il segnale fisiologico conta ma non domina); perdita di sensibilita' nei pazienti con febbre, leucocitosi, coagulopatia e insufficienza renale; se invece il calo e' minimo, si conferma che la performance e' sostenuta da ICULOS/EHR_flag/reparto/conteggi."
+       },
+       {
+        "id": "H8",
+        "title": "Baseline 'protettiva' concentrata in N8 e N10: due neuroni con bias elevato governano il livello di rischio basale",
+        "description": "N8 (W2=-0.76, b1=+1.17, il piu' grande in valore assoluto) e N10 (W2=-0.52, b1=+0.73) sono neuroni attivi di default che abbassano il logit per quasi tutti i pazienti. N8 legge soprattutto bilirubina diretta (-0.43), magnesio (-0.28), eta' (-0.24), MAP_n_meas, Lactate_n_meas, AST_n_meas (tutti negativi) e reparto (MICU +0.29, SICU +0.25): si spegne quando compaiono disfunzione epatica e workup intensivo. Il rischio del modello dipende quindi dalla calibrazione di pochi neuroni: la loro ablazione dovrebbe spostare massicciamente la calibrazione verso l'alto senza necessariamente cambiare il ranking. Non e' un sospetto clinico in se', ma indica fragilita' (poca ridondanza).",
+        "clinically_suspicious": false,
+        "features": [
+         "Bilirubin_direct_last_z",
+         "Magnesium_last_z",
+         "Age_z",
+         "Unit_MICU",
+         "Unit_SICU",
+         "PTT_last_z",
+         "BUN_last_z",
+         "Creatinine_last_z"
+        ],
+        "neurons": [
+         8,
+         10
+        ],
+        "effect_direction": "mixed",
+        "confidence": 0.6,
+        "intervention": {
+         "type": "ablate_neurons",
+         "features": [],
+         "neurons": [
+          8,
+          10
+         ],
+         "value": 0,
+         "direction": [],
+         "rationale": "Ablare i due neuroni protettivi dominanti per verificare se agiscono come offset di calibrazione (AUROC stabile, probabilita' medie molto piu' alte) o se contengono informazione discriminativa (AUROC in calo)."
+        },
+        "expected_result": "Aumento generalizzato delle probabilita' predette (peggior calibrazione, piu' falsi positivi); AUROC in calo moderato per la perdita del contributo di N10 (PTT/BUN/creatinina/eta') ma ranking in gran parte conservato."
+       }
+      ]
+     },
+     "output": "Ricevuto.",
+     "is_error": false
+    }
+   ]
+  }
+ ],
+ "usage": {
+  "input": 16,
+  "output": 13226,
+  "cache_read": 60600,
+  "cache_write": 21137
+ },
+ "submitted": {
+  "summary": "Il modello ha una struttura a \"neuroni protettivi di default\": 21/32 neuroni hanno W2<0 e bias positivo, quindi sono attivi in condizioni basali e abbassano il logit; le feature di rischio agiscono spegnendoli. Gli 11 neuroni con W2>0 (bias negativo) si accendono su pattern specifici (N18: febbre+piastrinopenia; N19/N22: leucocitosi in assenza di workup troponinico). Analizzando il contributo netto W2·W1 per feature, i tre predittori dominanti NON sono fisiologici: ICULOS_z (ore dall'ingresso in ICU, +1.53), EHR_flag_17 (flag binario non documentato, +1.48, coerente su 27/32 neuroni) e Unit_SICU (-1.42); queste tre colonne sono fortemente allineate nello spazio dei neuroni (cos 0.6-0.7) e vengono combinate dagli stessi neuroni protettivi (N10, N16, N28, N31, N23, N29, N5, N11). Un secondo blocco importante è costituito dai conteggi di misurazione (comportamento dei clinici): Lactate_n_meas (+0.64), Bilirubin_total_n_meas (+0.56), AST_n_meas (+0.42), FiO2/Fibrinogen/BaseExcess/WBC_n_meas (~+0.3) aumentano il rischio, mentre TroponinI_n_meas (-0.54, neuroni 19 e 22) lo riduce: il modello ha imparato \"se stanno facendo un workup settico/epatico -> sepsi; se fanno un workup cardiaco -> non sepsi\". Il segnale fisiologico esiste ed e' clinicamente coerente ma secondario: HR (+0.53), PTT (+0.52), BUN (+0.48), WBC (+0.47), bilirubina diretta (+0.40), creatinina (+0.40), Resp (+0.33), pH basso, SaO2 bassa, DBP bassa, Temp alta (quasi interamente via N18, peso +1.0), eta' (+0.30), lungo soggiorno pre-ICU (HospAdmTime, via N10). Sorprendente: il valore del lattato (Lactate_last_z) ha effetto netto quasi nullo (+0.07) con segni discordanti tra neuroni: il modello usa la frequenza di dosaggio del lattato invece del suo valore. In sintesi, una parte rilevante della capacita' predittiva sembra derivare da artefatti del dataset (tempo di degenza, flag EHR, reparto) e da proxy del comportamento clinico, con rischio di scarsa generalizzazione e di prestazioni gonfiate.",
+  "hypotheses": [
+   {
+    "id": "H1",
+    "title": "EHR_flag_17: possibile leakage dell'etichetta tramite flag non documentato",
+    "description": "EHR_flag_17 e' il secondo predittore per effetto netto (+1.48) ed e' usato in modo coerente da 27/32 neuroni, soprattutto spegnendo i neuroni protettivi N28 (w=-0.68), N31, N23, N5, N11, N29, N0 e accendendo N19/N22. Un indicatore binario di significato ignoto con un effetto cosi' grande e monotono e' tipico di una variabile che codifica un'azione clinica legata alla definizione stessa di sepsi (es. ordine di emocolture/antibiotici, attivazione di un protocollo sepsi). La sua colonna e' inoltre allineata a ICULOS (cos +0.62) e anti-allineata a Unit_SICU (cos -0.73): i neuroni la trattano come parte di un unico pattern 'contesto non fisiologico'.",
+    "clinically_suspicious": true,
+    "features": [
+     "EHR_flag_17"
+    ],
+    "neurons": [
+     28,
+     31,
+     23,
+     5,
+     11,
+     29,
+     0,
+     19,
+     22,
+     15,
+     10,
+     8
+    ],
+    "effect_direction": "increases_risk",
+    "confidence": 0.85,
+    "intervention": {
+     "type": "zero_input_weights",
+     "features": [
+      "EHR_flag_17"
+     ],
+     "neurons": [],
+     "value": 0,
+     "direction": [],
+     "rationale": "Rimuovere completamente la lettura del flag: se il flag e' un leak, la performance (AUROC/AUPRC) cala molto e le predizioni nelle ore con flag=1 crollano; se e' solo correlato debolmente, il calo e' modesto.l'intervento clamp_input a 0 e' equivalente in pratica.'' ''"
+    },
+    "expected_result": "Calo marcato di AUROC/AUPRC (soprattutto nelle ore immediatamente precedenti l'etichetta) e forte riduzione della probabilita' predetta nelle ore con flag=1; inoltre, se il flag e' un leak, la distribuzione temporale del flag dovrebbe concentrarsi proprio nelle 6 ore prima della sepsi."
+   },
+   {
+    "id": "H2",
+    "title": "Dipendenza dal tempo di degenza (ICULOS_z): il rischio cresce con le ore in ICU",
+    "description": "ICULOS_z e' il predittore con il maggiore effetto netto (+1.53), coerente su 26/32 neuroni: spegne i neuroni protettivi N10 (w=-0.37), N16 (-0.43), N31 (-0.50), N6 (-0.51), N29, N21, N20, N11 e accende N19 (+0.29). Il modello ha quindi imparato che 'piu' a lungo il paziente e' in ICU, piu' probabile e' la sepsi'. E' un artefatto noto dei dataset orari di sepsi (i pazienti settici hanno degenze piu' lunghe e l'etichetta positiva compare tardi), non un meccanismo fisiologico; porta a sovrastimare il rischio nei lungodegenti stabili e a sottostimarlo nelle prime ore.",
+    "clinically_suspicious": true,
+    "features": [
+     "ICULOS_z"
+    ],
+    "neurons": [
+     10,
+     16,
+     31,
+     19,
+     8,
+     29,
+     21,
+     5,
+     20,
+     11,
+     6,
+     0
+    ],
+    "effect_direction": "increases_risk",
+    "confidence": 0.8,
+    "intervention": {
+     "type": "clamp_input",
+     "features": [
+      "ICULOS_z"
+     ],
+     "neurons": [],
+     "value": 0,
+     "direction": [],
+     "rationale": "Fissare ICULOS al valore medio (z=0) elimina la monotonia temporale pur lasciando i neuroni nel loro regime operativo tipico. Confrontare la calibrazione per fasce di ICULOS prima/dopo."
+    },
+    "expected_result": "Le probabilita' predette non crescono piu' con l'ora di degenza; calo dell'AUROC globale (parte del segnale era il tempo) ma AUROC entro fasce di ICULOS pressoche' invariata; migliore calibrazione nelle prime ore e nei lungodegenti."
+   },
+   {
+    "id": "H3",
+    "title": "Bias di reparto: Unit_SICU abbassa fortemente il rischio, Unit_MICU lo alza",
+    "description": "Unit_SICU ha effetto netto -1.42 (terzo in valore assoluto), concentrato sui neuroni protettivi N10 (w=+0.64), N16 (+0.51), N28, N31, N29, N8, N5, N0, che vengono tenuti accesi dalla SICU. Unit_MICU ha effetto +0.18 ma con segni discordanti (N8 lo usa in senso protettivo, N0/N31/N15 in senso di rischio). Il reparto funziona come un prior di prevalenza (e, dato che i pazienti con unita' mancante sono una terza categoria, probabilmente anche come identificatore di ospedale). Sospetto perche' non trasferibile ad altri centri e perche' puo' mascherare sepsi post-chirurgiche.",
+    "clinically_suspicious": true,
+    "features": [
+     "Unit_SICU",
+     "Unit_MICU"
+    ],
+    "neurons": [
+     10,
+     16,
+     28,
+     31,
+     29,
+     8,
+     5,
+     0,
+     15,
+     23
+    ],
+    "effect_direction": "decreases_risk",
+    "confidence": 0.7,
+    "intervention": {
+     "type": "zero_input_weights",
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "neurons": [],
+     "value": 0,
+     "direction": [],
+     "rationale": "Eliminare l'informazione di reparto e misurare AUROC globale vs AUROC stratificata per reparto: se il modello usa il reparto solo come prior, l'AUROC entro reparto non cambia mentre quella globale cala."
+    },
+    "expected_result": "Aumento sistematico del rischio predetto nei pazienti SICU e lieve riduzione nei MICU; calo dell'AUROC globale ma AUROC entro-reparto sostanzialmente invariata; miglior sensibilita' per le sepsi in SICU."
+   },
+   {
+    "id": "H4",
+    "title": "Proxy del comportamento clinico: frequenza di esami (lattato, bilirubina, AST, FiO2, fibrinogeno, BE, WBC) come segnale di 'sospetto clinico'",
+    "description": "I conteggi di misurazione nelle ultime 6 ore hanno effetto netto complessivo +0.94. In particolare Lactate_n_meas (+0.64, 19/32 neuroni concordi: N8, N15, N14, N7, N28, N16), Bilirubin_total_n_meas (+0.56, 24/32: N16, N15), AST_n_meas (+0.42), FiO2_n_meas (+0.33), Fibrinogen_n_meas (+0.33), BaseExcess_n_meas (+0.30), WBC_n_meas (+0.30). Il modello ha imparato che quando i clinici ordinano un workup da sepsi/SOFA (lattato, funzione epatica, coagulazione, emogas) la sepsi e' imminente. E' un segnale reale ma circolare: dipende dalle pratiche locali, non funziona come allerta precoce (il clinico ha gia' il sospetto) e fallisce dove i protocolli di prelievo differiscono.",
+    "clinically_suspicious": true,
+    "features": [
+     "Lactate_n_meas_6h",
+     "Bilirubin_total_n_meas_6h",
+     "AST_n_meas_6h",
+     "FiO2_n_meas_6h",
+     "Fibrinogen_n_meas_6h",
+     "BaseExcess_n_meas_6h",
+     "WBC_n_meas_6h",
+     "Bilirubin_direct_n_meas_6h",
+     "MAP_n_meas_6h",
+     "PaCO2_n_meas_6h"
+    ],
+    "neurons": [
+     8,
+     15,
+     14,
+     7,
+     16,
+     28,
+     10,
+     12,
+     22,
+     19
+    ],
+    "effect_direction": "increases_risk",
+    "confidence": 0.75,
+    "intervention": {
+     "type": "zero_input_weights",
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "FiO2_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "WBC_n_meas_6h",
+      "Bilirubin_direct_n_meas_6h",
+      "MAP_n_meas_6h",
+      "PaCO2_n_meas_6h"
+     ],
+     "neurons": [],
+     "value": 0,
+     "direction": [],
+     "rationale": "Azzerare i conteggi con effetto positivo isola il contributo del 'workup clinico' rispetto ai valori di laboratorio veri e propri (che restano letti)."
+    },
+    "expected_result": "Calo sensibile di AUPRC, concentrato nelle ore in cui vengono prelevati lattato/bilirubina/AST; il rischio predetto diventa piu' dipendente dai valori fisiologici; la distanza tra predizioni di pazienti con e senza prelievi recenti si riduce molto."
+   },
+   {
+    "id": "H5",
+    "title": "Workup troponinico come 'esclusione' di sepsi (TroponinI_n_meas_6h riduce il rischio)",
+    "description": "TroponinI_n_meas_6h ha effetto netto -0.54, dovuto quasi interamente ai due neuroni eccitatori N19 (w=-0.63, W2=+0.48) e N22 (w=-0.67, W2=+0.41), che codificano 'WBC alto + nessun dosaggio di troponina' -> sepsi, oltre a N9 (+0.42 su neurone protettivo). Il modello ha appreso una diagnosi differenziale per comportamento del clinico: se si cerca una causa cardiaca, non e' sepsi. Ma troponina elevata e dosata e' frequente nella sepsi (miocardiopatia settica, pazienti cardiopatici): il meccanismo puo' causare falsi negativi proprio nei pazienti piu' fragili. Nota: il valore TroponinI_last_z ha invece effetto positivo (+0.24), coerente con l'organo-danno.",
+    "clinically_suspicious": true,
+    "features": [
+     "TroponinI_n_meas_6h"
+    ],
+    "neurons": [
+     19,
+     22,
+     9,
+     26
+    ],
+    "effect_direction": "decreases_risk",
+    "confidence": 0.7,
+    "intervention": {
+     "type": "zero_input_weights",
+     "features": [
+      "TroponinI_n_meas_6h"
+     ],
+     "neurons": [],
+     "value": 0,
+     "direction": [],
+     "rationale": "Rimuovere il conteggio troponinico (lasciando il valore) verifica se la soppressione e' un artefatto di ordinazione esami: la sensibilita' nei pazienti con troponina dosata dovrebbe salire."
+    },
+    "expected_result": "Aumento del rischio predetto nelle ore con troponina dosata di recente; miglioramento della sensibilita' nei pazienti settici con workup cardiaco, a fronte di un lieve calo della specificita' globale; N19/N22 si attivano piu' spesso."
+   },
+   {
+    "id": "H6",
+    "title": "Il valore del lattato e' praticamente ignorato (il modello usa solo la frequenza di dosaggio)",
+    "description": "Lactate_last_z ha effetto netto +0.07, con segni discordanti tra neuroni (N15: -0.40 su neurone protettivo -> rischio; N14: +0.30 su protettivo -> protezione; N18: -0.29 su neurone eccitatorio 'febbre' -> protezione). In contrasto Lactate_n_meas_6h ha +0.64. Clinicamente il lattato elevato e' uno dei marker piu' forti di sepsi/shock settico; un modello che non lo usa (o lo usa con segno incoerente) e' sospetto per omissione e suggerisce che il conteggio abbia 'rubato' il segnale. L'ipotesi e' che azzerare il valore cambi poco mentre azzerare il conteggio cambi molto.",
+    "clinically_suspicious": true,
+    "features": [
+     "Lactate_last_z",
+     "Lactate_n_meas_6h"
+    ],
+    "neurons": [
+     15,
+     14,
+     18,
+     21,
+     8,
+     7
+    ],
+    "effect_direction": "mixed",
+    "confidence": 0.6,
+    "intervention": {
+     "type": "zero_input_weights",
+     "features": [
+      "Lactate_last_z"
+     ],
+     "neurons": [],
+     "value": 0,
+     "direction": [],
+     "rationale": "Confronto a coppie: azzerare Lactate_last_z (atteso: variazione minima) vs azzerare Lactate_n_meas_6h (atteso in H4: variazione grande). Se confermato, il modello non sfrutta il contenuto fisiologico del lattato."
+    },
+    "expected_result": "Variazione trascurabile di AUROC/AUPRC azzerando Lactate_last_z; nessun aumento del rischio predetto nei pazienti con lattato molto alto rispetto a quelli con lattato normale ma ugualmente dosato."
+   },
+   {
+    "id": "H7",
+    "title": "Meccanismo fisiologico coerente: SIRS + disfunzione d'organo (HR, Resp, Temp, WBC, BUN/creatinina, bilirubina diretta, PTT, SaO2, pH)",
+    "description": "Il segnale clinicamente plausibile e' presente: HR (+0.53, via N15, N10, N19, N22), Resp (+0.33), Temp (+0.23, quasi interamente dal neurone N18 con peso +1.00 insieme a piastrine basse -0.44), WBC (+0.47, N19/N22/N15), PTT (+0.52, soprattutto N10 w=-0.96), BUN (+0.48), creatinina (+0.40), bilirubina diretta (+0.40, N8/N15), SaO2 bassa (-0.37), pH basso (-0.32), DBP bassa (-0.28), eta' (+0.30), degenza pre-ICU lunga (HospAdmTime, via N10). N10 (W2=-0.52, b1=0.73) e' un neurone 'protettivo' spento da coagulopatia + insufficienza renale + troponina alta + eta'. Questo blocco non e' sospetto, ma e' quantitativamente inferiore ai fattori di contesto (H1-H4).",
+    "clinically_suspicious": false,
+    "features": [
+     "HR_last_z",
+     "Resp_last_z",
+     "Temp_last_z",
+     "WBC_last_z",
+     "PTT_last_z",
+     "BUN_last_z",
+     "Creatinine_last_z",
+     "Bilirubin_direct_last_z",
+     "SaO2_last_z",
+     "pH_last_z",
+     "DBP_last_z",
+     "Age_z"
+    ],
+    "neurons": [
+     10,
+     15,
+     18,
+     19,
+     22,
+     8,
+     23,
+     24,
+     30
+    ],
+    "effect_direction": "increases_risk",
+    "confidence": 0.75,
+    "intervention": {
+     "type": "ablate_neurons",
+     "features": [],
+     "neurons": [
+      10,
+      18,
+      19,
+      22
+     ],
+     "value": 0,
+     "direction": [],
+     "rationale": "N10 (coagulopatia/renale/eta'), N18 (febbre+piastrinopenia) e N19/N22 (leucocitosi) sono i neuroni che veicolano la maggior parte del segnale fisiologico. Ablandoli si misura quanta performance deriva dalla fisiologia rispetto al contesto; se la performance resta alta, il modello dipende soprattutto dagli artefatti H1-H4."
+    },
+    "expected_result": "Calo moderato di AUROC/AUPRC (il segnale fisiologico conta ma non domina); perdita di sensibilita' nei pazienti con febbre, leucocitosi, coagulopatia e insufficienza renale; se invece il calo e' minimo, si conferma che la performance e' sostenuta da ICULOS/EHR_flag/reparto/conteggi."
+   },
+   {
+    "id": "H8",
+    "title": "Baseline 'protettiva' concentrata in N8 e N10: due neuroni con bias elevato governano il livello di rischio basale",
+    "description": "N8 (W2=-0.76, b1=+1.17, il piu' grande in valore assoluto) e N10 (W2=-0.52, b1=+0.73) sono neuroni attivi di default che abbassano il logit per quasi tutti i pazienti. N8 legge soprattutto bilirubina diretta (-0.43), magnesio (-0.28), eta' (-0.24), MAP_n_meas, Lactate_n_meas, AST_n_meas (tutti negativi) e reparto (MICU +0.29, SICU +0.25): si spegne quando compaiono disfunzione epatica e workup intensivo. Il rischio del modello dipende quindi dalla calibrazione di pochi neuroni: la loro ablazione dovrebbe spostare massicciamente la calibrazione verso l'alto senza necessariamente cambiare il ranking. Non e' un sospetto clinico in se', ma indica fragilita' (poca ridondanza).",
+    "clinically_suspicious": false,
+    "features": [
+     "Bilirubin_direct_last_z",
+     "Magnesium_last_z",
+     "Age_z",
+     "Unit_MICU",
+     "Unit_SICU",
+     "PTT_last_z",
+     "BUN_last_z",
+     "Creatinine_last_z"
+    ],
+    "neurons": [
+     8,
+     10
+    ],
+    "effect_direction": "mixed",
+    "confidence": 0.6,
+    "intervention": {
+     "type": "ablate_neurons",
+     "features": [],
+     "neurons": [
+      8,
+      10
+     ],
+     "value": 0,
+     "direction": [],
+     "rationale": "Ablare i due neuroni protettivi dominanti per verificare se agiscono come offset di calibrazione (AUROC stabile, probabilita' medie molto piu' alte) o se contengono informazione discriminativa (AUROC in calo)."
+    },
+    "expected_result": "Aumento generalizzato delle probabilita' predette (peggior calibrazione, piu' falsi positivi); AUROC in calo moderato per la perdita del contributo di N10 (PTT/BUN/creatinina/eta') ma ranking in gran parte conservato."
+   }
+  ]
+ },
+ "n_turns": 7
+}

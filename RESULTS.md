@@ -16,6 +16,9 @@ uv run python phase6_correction.py        # fase 6: correzione dei pesi da parte
 uv run python phase6b_choice.py           # fase 6b: correzione "a scelta", Opus 5.5 contro Fable 5.1 (serve la chiave API)
 uv run python phase6c_physiology.py       # fase 6c: come 6b + permesso di scrivere fisiologia nei pesi (serve la chiave API)
 uv run python phase7_shap.py              # fase 7: SHAP e confronto
+uv run python phase8_dose.py train        # fase 8: scorciatoia a intensita' decrescente, nome neutro (modelli, verita', SHAP)
+uv run python phase8_dose.py audit        # fase 8: audit Opus 5.5 e Fable 5.1 (serve la chiave API)
+uv run python phase8_dose.py score        # fase 8: verifica e tabelle
 ```
 
 File: `common.py` (feature, modello, metriche), un file per fase. Le tabelle complete sono in
@@ -639,6 +642,85 @@ Cosa trova SHAP e cosa no, rispetto all'LLM:
 
 ---
 
+## Fase 8: scorciatoia sempre più debole, con nome neutro
+
+Domanda: l'audit sui pesi trova la scorciatoia solo perché è enorme e ha un nome rivelatore?
+
+Metodo (`phase8_dose.py`):
+- La colonna inserita è rigenerata con gli stessi numeri casuali della fase 1 (la colonna originale è
+  riprodotta esattamente). In A, P(flag=1 | sepsi) vale 0,70, 0,40, 0,20 o 0,12, con
+  P(flag=1 | no sepsi) = 0,05. In B il flag resta rumore al 10%. I livelli sono annidati.
+- Un modello `with_bc` seed 0 per livello (per 0,70 è quello della fase 2), con verità misurata
+  come nella fase 3 e SHAP (DeepExplainer, 3000 righe per set).
+- Nella sandbox la colonna si chiama **`EHR_flag_17`**, "indicatore binario del sistema informatico
+  ospedaliero registrato in quest'ora (significato non documentato)". Tutto il resto è come nella fase 4.
+- Audit solo pesi, senza forward pass (condizione A), con Opus 5.5 e Fable 5.1, 3 run per livello: 24 run.
+- Costo: circa 3,3 $ (Opus) e 15,2 $ (Fable), compresi i 2 run rilanciati.
+
+Run rilanciati (i file originali sono conservati in `results/phase8_runs/`):
+- Fable, livello 0,40, rep1: ha raggiunto il limite di 64.000 token in uscita mentre consegnava il
+  report, che è arrivato senza ipotesi (`…_TRONCATO_max_tokens.json`).
+- Fable, livello 0,70, rep2: ha consegnato le ipotesi come stringa JSON non valida
+  (`…_MALFORMATO_ipotesi_come_stringa.json`). La prima ipotesi leggibile era comunque "EHR_flag_17
+  domina la predizione (probabile leakage)", confidenza 0,95.
+
+### Verità misurata
+
+| P(flag \| sepsi) in A | AUROC del flag da solo (A) | modello: A AUROC | modello: B AUROC | effetto flag 0→1 (logit) | rango colonna \|W1\| (su 75) | rango SHAP A / B | B AUROC con flag azzerato |
+|---|---|---|---|---|---|---|---|
+| 0.70 | 0.823 | 0.9076 | 0.6627 | +3.88 | **1** | 1 / 1 | 0.6888 |
+| 0.40 | 0.668 | 0.8303 | 0.6892 | +2.66 | **1** | 4 / 3 | 0.7090 |
+| 0.20 | 0.571 | 0.7869 | 0.7116 | +1.61 | **1** | 14 / 5 | 0.7209 |
+| 0.12 | 0.529 | 0.7762 | 0.7194 | +0.99 | **1** | **27** / 17 | 0.7229 |
+
+Con il calo dell'intensità, la scorciatoia pesa sempre meno sulle prestazioni: su A si avvicina
+al modello senza scorciatoia (0,769), e su B toglierla migliora sempre meno (+0,026 a 0,70, +0,004
+a 0,12). Per SHAP scende dal 1° al 27° posto su A.
+**La sua colonna di W1 resta però la più grande della rete a tutti i livelli.** Un input binario e
+raro, sulla scala 0/1, riceve pesi grandi anche quando il suo effetto medio sulla popolazione è piccolo.
+
+### Risultati dell'audit
+
+| P(flag \| sepsi) | LLM | citato | prima ipotesi | sospetto e confermato (regola fase 5) | sospetto e confermato (regola rivista) |
+|---|---|---|---|---|---|
+| 0.70 | Opus 5.5 / Fable 5.1 | 3/3 / 3/3 | 3/3 / 3/3 | 3/3 / 3/3 | 3/3 / 3/3 |
+| 0.40 | Opus 5.5 / Fable 5.1 | 3/3 / 3/3 | 3/3 / 3/3 | 3/3 / 3/3 | 3/3 / 3/3 |
+| 0.20 | Opus 5.5 / Fable 5.1 | 3/3 / 3/3 | 3/3 / 3/3 | **0/3 / 0/3** | 3/3 / 3/3 |
+| 0.12 | Opus 5.5 / Fable 5.1 | 3/3 / 3/3 | 3/3 / 3/3 | 3/3 / 2/3 | 3/3 / 3/3 |
+
+**Nota sulla regola di verifica.** La regola della fase 5, fissata in anticipo, misura la
+dipendenza come media su tutte le righe. Un flag acceso nel 5% circa delle ore ha quindi una
+dipendenza media sotto soglia (0,082 a 0,20; 0,049 a 0,12) anche quando l'effetto, se acceso, è
++1,6 o +1,0 logit. Così l'ipotesi "il modello usa il flag" risulta "smentita" anche se è vera. I "3/3" a
+0,12 con la regola originale vengono solo da ipotesi combinate (flag + ICULOS + reparto), in cui la
+dipendenza è dominata dalle altre feature. La regola rivista, **dichiarata post hoc**, usa per le ipotesi
+sul solo flag binario l'effetto 0→1 sulla stessa riga (≥ 0,10 logit e verso corretto). Anche la
+fase 5 andrebbe letta così: lì la scorciatoia era abbastanza forte da superare comunque la soglia.
+
+Cosa si vede:
+1. **Il flag è la prima ipotesi in 24 run su 24, a tutti i livelli, con entrambi i modelli**, anche a
+   0,12, dove SHAP lo mette al 27° posto su A. Entrambi lo trovano dalla colonna di W1 più grande "per
+   unità di input" e dall'effetto lineare W2·W1.
+2. **Il nome rivelatore non serviva.** Con un nome neutro entrambi lo chiamano "probabile leakage" in
+   tutti i run (confidenza 0,80-0,95). Spesso indovinano anche cos'è: "un evento registrato dall'EHR
+   in risposta al sospetto clinico di sepsi, per esempio colture o antibiotici". Il ragionamento è:
+   un indicatore binario non documentato con un effetto così forte è più probabilmente un evento
+   amministrativo che fisiologia.
+3. **Ne sovrastimano sistematicamente l'importanza.** Stime dell'effetto: +1,48 contro +0,99 reali a
+   0,12; +2,67 contro +1,61 a 0,20; circa +6 contro +3,9 a 0,70. A 0,12 lo descrivono come "la seconda
+   feature più influente" o "dominante", mentre sulla popolazione è marginale (SHAP 27°, e toglierlo
+   cambia B di +0,004). L'audit sui pesi vede l'effetto **per occorrenza**, SHAP l'effetto **medio**:
+   per una scorciatoia rara ma forte i pesi sono il segnale più sensibile.
+4. **Opus e Fable si comportano allo stesso modo** nel trovarla: per il rilevamento non serve il modello più costoso.
+
+**Limite: anche questo test resta "facile" per chi legge i pesi**, perché un input binario non
+standardizzato si distingue per costruzione. Il test davvero difficile richiede due controlli:
+- una scorciatoia continua e standardizzata, che non spicchi per scala;
+- un flag binario non documentato ma **innocuo**, per misurare quanti falsi allarmi genera la
+  regola "flag non documentato + peso grande = leakage".
+
+---
+
 ## Conclusioni e limiti
 
 1. **Un LLM che legge solo i pesi trova la scorciatoia inserita nel 100% dei run** (9/9, anche senza
@@ -656,7 +738,11 @@ Cosa trova SHAP e cosa no, rispetto all'LLM:
 3. **I forward pass non servono** su questo modello: la condizione A è la migliore.
 4. **SHAP, con i nomi delle feature davanti, arriva alle stesse conclusioni.** Il vantaggio dell'LLM
    è non avere bisogno di dati e proporre e motivare interventi, non vedere qualcosa che SHAP non vede.
-5. **Limite principale: il test è facile.**
+5. **Fase 8: la scorciatoia si trova anche debole e con nome neutro** (24/24 run, prima ipotesi anche
+   quando SHAP la mette 27ª), ma l'LLM ne sovrastima l'importanza. La ragione è che un flag binario raro
+   ha comunque i pesi più grandi della rete. Il test davvero difficile (scorciatoia continua, controllo
+   con un flag innocuo) resta da fare.
+6. **Limite principale (fasi 4-7): il test è facile.**
    - La scorciatoia inserita ha la colonna di W1 più grande fra i 75 input (fase 3).
    - Ha un nome che, per un clinico, dichiara il leakage.
    - Non sappiamo quanto dell'esito dipenda dal nome. Il controllo naturale sono i **nomi delle

@@ -1,0 +1,2198 @@
+{
+ "truth": {
+  "0.7": {
+   "flag_rate_A_label1": 0.6982376575469971,
+   "flag_rate_A_label0": 0.04984225332736969,
+   "flag_alone_auroc_A": 0.822650546441741,
+   "model": {
+    "A_test": {
+     "auroc": 0.9075721014622172,
+     "auprc": 0.38927322396398417,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6627193283923952,
+     "auprc": 0.028807033271873353,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 3.876012392791782,
+     "counts_abs_dlogit_to_median": 0.6302194696970217,
+     "ICULOS_abs_dlogit_to_median": 0.38933217313523716,
+     "ICULOS_slope_168h_minus_24h": 2.8514574161913298,
+     "HospAdmTime_abs_dlogit_to_median": 0.12491915177056084,
+     "Unit_SICU_abs_dlogit_to_median": 0.2975954525043056,
+     "physiology_last_abs_dlogit_to_median": 0.6675258625592702
+    }
+   },
+   "after_zero_flag": {
+    "A_test": {
+     "auroc": 0.7627511212750394,
+     "auprc": 0.08922962502019083,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6887768451472251,
+     "auprc": 0.048834076826976686,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.634882611849424,
+     "ICULOS_abs_dlogit_to_median": 0.39277752543311334,
+     "ICULOS_slope_168h_minus_24h": 2.8788600670428313,
+     "HospAdmTime_abs_dlogit_to_median": 0.12705007486852493,
+     "Unit_SICU_abs_dlogit_to_median": 0.3014649025162068,
+     "physiology_last_abs_dlogit_to_median": 0.6671358291752094
+    }
+   },
+   "flag_paired_effect": 3.876012392791782,
+   "flag_W1_col_L1_rank": 1,
+   "flag_W2W1_rank": 1,
+   "shap": {
+    "A_test": {
+     "rank": 1,
+     "mean_abs": 0.43573176192210006,
+     "top5": [
+      "blood_culture_ordered",
+      "Unit_SICU",
+      "ICULOS_z",
+      "HR_n_meas_6h",
+      "SBP_n_meas_6h"
+     ]
+    },
+    "B_test": {
+     "rank": 1,
+     "mean_abs": 0.5816712231974728,
+     "top5": [
+      "blood_culture_ordered",
+      "Unit_SICU",
+      "ICULOS_z",
+      "HR_n_meas_6h",
+      "Temp_last_z"
+     ]
+    }
+   }
+  },
+  "0.4": {
+   "flag_rate_A_label1": 0.39740896224975586,
+   "flag_rate_A_label0": 0.04984225332736969,
+   "flag_alone_auroc_A": 0.6681553471400243,
+   "model": {
+    "A_test": {
+     "auroc": 0.8302750247979824,
+     "auprc": 0.18960378376797368,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6892348670355015,
+     "auprc": 0.03834812267693351,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 2.663731682390934,
+     "counts_abs_dlogit_to_median": 0.6680935548619076,
+     "ICULOS_abs_dlogit_to_median": 0.4407768036445147,
+     "ICULOS_slope_168h_minus_24h": 2.9560440854109777,
+     "HospAdmTime_abs_dlogit_to_median": 0.11261095008488292,
+     "Unit_SICU_abs_dlogit_to_median": 0.29004877796053274,
+     "physiology_last_abs_dlogit_to_median": 0.6358929332030475
+    }
+   },
+   "after_zero_flag": {
+    "A_test": {
+     "auroc": 0.7673433279436471,
+     "auprc": 0.08959974276981751,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.7090158968445145,
+     "auprc": 0.05567905780934461,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.676066783486261,
+     "ICULOS_abs_dlogit_to_median": 0.44680161493148723,
+     "ICULOS_slope_168h_minus_24h": 3.000196609813614,
+     "HospAdmTime_abs_dlogit_to_median": 0.11425224999691287,
+     "Unit_SICU_abs_dlogit_to_median": 0.29305426323873346,
+     "physiology_last_abs_dlogit_to_median": 0.636094390315186
+    }
+   },
+   "flag_paired_effect": 2.663731682390934,
+   "flag_W1_col_L1_rank": 1,
+   "flag_W2W1_rank": 1,
+   "shap": {
+    "A_test": {
+     "rank": 4,
+     "mean_abs": 0.2740543333218504,
+     "top5": [
+      "ICULOS_z",
+      "Unit_SICU",
+      "FiO2_n_meas_6h",
+      "blood_culture_ordered",
+      "HR_n_meas_6h"
+     ]
+    },
+    "B_test": {
+     "rank": 3,
+     "mean_abs": 0.38466858102428264,
+     "top5": [
+      "ICULOS_z",
+      "Unit_SICU",
+      "blood_culture_ordered",
+      "HR_n_meas_6h",
+      "SBP_n_meas_6h"
+     ]
+    }
+   }
+  },
+  "0.2": {
+   "flag_rate_A_label1": 0.1984127014875412,
+   "flag_rate_A_label0": 0.04984225332736969,
+   "flag_alone_auroc_A": 0.5706866244167191,
+   "model": {
+    "A_test": {
+     "auroc": 0.7868854167653788,
+     "auprc": 0.10574929807490997,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.7115668894066318,
+     "auprc": 0.05361514432508765,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 1.6051684159726678,
+     "counts_abs_dlogit_to_median": 0.6341837784912429,
+     "ICULOS_abs_dlogit_to_median": 0.4575459340305976,
+     "ICULOS_slope_168h_minus_24h": 2.908843568733241,
+     "HospAdmTime_abs_dlogit_to_median": 0.1044074511273171,
+     "Unit_SICU_abs_dlogit_to_median": 0.2671598941400601,
+     "physiology_last_abs_dlogit_to_median": 0.6822850076064315
+    }
+   },
+   "after_zero_flag": {
+    "A_test": {
+     "auroc": 0.7681068858987035,
+     "auprc": 0.08758283875585604,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.7208806074913124,
+     "auprc": 0.06087425802038979,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.6392120224224045,
+     "ICULOS_abs_dlogit_to_median": 0.4610659726165402,
+     "ICULOS_slope_168h_minus_24h": 2.934584027522325,
+     "HospAdmTime_abs_dlogit_to_median": 0.10558068330296573,
+     "Unit_SICU_abs_dlogit_to_median": 0.2690826911946324,
+     "physiology_last_abs_dlogit_to_median": 0.6831149706544728
+    }
+   },
+   "flag_paired_effect": 1.6051684159726678,
+   "flag_W1_col_L1_rank": 1,
+   "flag_W2W1_rank": 1,
+   "shap": {
+    "A_test": {
+     "rank": 14,
+     "mean_abs": 0.15319817560703872,
+     "top5": [
+      "ICULOS_z",
+      "Unit_SICU",
+      "FiO2_n_meas_6h",
+      "HR_n_meas_6h",
+      "SBP_n_meas_6h"
+     ]
+    },
+    "B_test": {
+     "rank": 5,
+     "mean_abs": 0.22437912149099498,
+     "top5": [
+      "ICULOS_z",
+      "Unit_SICU",
+      "HR_n_meas_6h",
+      "Temp_last_z",
+      "blood_culture_ordered"
+     ]
+    }
+   }
+  },
+  "0.12": {
+   "flag_rate_A_label1": 0.11659663915634155,
+   "flag_rate_A_label0": 0.04984225332736969,
+   "flag_alone_auroc_A": 0.5292260483329251,
+   "model": {
+    "A_test": {
+     "auroc": 0.7761834225648487,
+     "auprc": 0.09180766000618411,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.7193541582611431,
+     "auprc": 0.059753977223432446,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.985690567505092,
+     "counts_abs_dlogit_to_median": 0.6423039180425788,
+     "ICULOS_abs_dlogit_to_median": 0.4693816193482534,
+     "ICULOS_slope_168h_minus_24h": 2.972951113858757,
+     "HospAdmTime_abs_dlogit_to_median": 0.10350408389066078,
+     "Unit_SICU_abs_dlogit_to_median": 0.2626562927496098,
+     "physiology_last_abs_dlogit_to_median": 0.6868599584961173
+    }
+   },
+   "after_zero_flag": {
+    "A_test": {
+     "auroc": 0.7714593670936105,
+     "auprc": 0.08876038334940421,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.7228960093924279,
+     "auprc": 0.06166946142672951,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.6455380705636312,
+     "ICULOS_abs_dlogit_to_median": 0.47171526433323757,
+     "ICULOS_slope_168h_minus_24h": 2.991682737737766,
+     "HospAdmTime_abs_dlogit_to_median": 0.10413927293402483,
+     "Unit_SICU_abs_dlogit_to_median": 0.26371002021309503,
+     "physiology_last_abs_dlogit_to_median": 0.6875867893629676
+    }
+   },
+   "flag_paired_effect": 0.985690567505092,
+   "flag_W1_col_L1_rank": 1,
+   "flag_W2W1_rank": 3,
+   "shap": {
+    "A_test": {
+     "rank": 27,
+     "mean_abs": 0.09141658288835278,
+     "top5": [
+      "ICULOS_z",
+      "Unit_SICU",
+      "FiO2_n_meas_6h",
+      "HR_n_meas_6h",
+      "SBP_n_meas_6h"
+     ]
+    },
+    "B_test": {
+     "rank": 17,
+     "mean_abs": 0.13553493262955368,
+     "top5": [
+      "ICULOS_z",
+      "Unit_SICU",
+      "HR_n_meas_6h",
+      "Temp_last_z",
+      "SBP_n_meas_6h"
+     ]
+    }
+   }
+  }
+ },
+ "runs": [
+  {
+   "p": 0.7,
+   "llm": "claude-fable-5-1",
+   "rep": 0,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: leak/proxy non documentato che domina la predizione",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Scorciatoia temporale: ore dall'ingresso in ICU (ICULOS_z)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Effetto di reparto: Unit_SICU abbassa fortemente il rischio, Unit_MICU lo alza",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Proxy del sospetto clinico: frequenza di misurazione di lattato, bilirubina, AST, fibrinogeno, emogas",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnale fisiologico plausibile: disfunzione d'organo e vitali",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 14,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Degenza pre-ICU lunga (HospAdmTime_z negativo) aumenta il rischio",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Architettura a 'neuroni protettivi di default' guidata dal neurone 28",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 2,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 25% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.7,
+   "llm": "claude-fable-5-1",
+   "rep": 1,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17 come scorciatoia/leakage dominante",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neuroni rilevatori puri del flag (n28, n8)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 25% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Tempo di degenza in TI (ICULOS) come scorciatoia temporale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Bias di reparto: Unit_SICU riduce fortemente il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Frequenza di prelievo di lattato/bilirubina/AST come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone composito di disfunzione d'organo/coagulazione (n10)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnale SIRS/vitali coerente ma debole; lattato quasi ignorato",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 9,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.7,
+   "llm": "claude-fable-5-1",
+   "rep": 2,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17 come scorciatoia/leakage dominante",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone 28: rilevatore dedicato del flag EHR",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 3,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 0% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Scorciatoie di contesto/tempo: ICULOS, reparto, HospAdmTime",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 4,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Frequenza di misurazione dei laboratori come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone 10: asse fisiologico di disfunzione d'organo (plausibile)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Marker classici di sepsi sottoutilizzati e incoerenti",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 6,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.7,
+   "llm": "claude-opus-5-5",
+   "rep": 0,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: leakage da flag amministrativo/informatico",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il neurone 28 \u00e8 un rilevatore quasi puro del flag",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 3,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 0% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Il numero di misure di lattato fa da proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.067 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Schema degli ordini di laboratorio (esami mirati contro routine)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 14,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Scorciatoia sul reparto: la terapia intensiva chirurgica abbassa il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "La durata della degenza (ICULOS) e HospAdmTime come scorciatoia temporale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnale fisiologico plausibile (disfunzione d'organo, SIRS)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 12,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.7,
+   "llm": "claude-opus-5-5",
+   "rep": 1,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag informatico non documentato che domina la predizione",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Conteggi di esami 'da sospetto di sepsi' (lattato, bilirubina, AST, emogas) usati come segnale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Reparto di degenza (SICU/MICU) come prior di rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Tempo di degenza (ICULOS) e HospAdmTime come scorciatoie temporali",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Via fisiologica plausibile: disfunzione d'organo/coagulazione e infiammazione",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 11,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Effetto del sesso (minore)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.029 < 0.1); verso sbagliato (effetto misurato +0.016)",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.7,
+   "llm": "claude-opus-5-5",
+   "rep": 2,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag informatico non documentato che domina la predizione (probabile fuga di informazione dall'etichetta)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il neurone 28 (e il neurone 8) come rilevatore principale del flag",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 25% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Scorciatoia per reparto: Unit_SICU abbassa il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Scorciatoia temporale e amministrativa: ICULOS_z alza il rischio, HospAdmTime_z lo abbassa",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Comportamento del medico: i conteggi degli esami del work-up per sepsi alzano il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnale fisiologico plausibile, simile a un punteggio di disfunzione d'organo",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 14,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il neurone 10 mescola marcatori d'organo e variabili demografiche e amministrative",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 22% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.4,
+   "llm": "claude-fable-5-1",
+   "rep": 0,
+   "n_hyp": 9,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: scorciatoia/leakage dominante",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il flag EHR gate-a via le feature cliniche",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Durata di degenza (ICULOS) come fattore di rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Bias di reparto: SICU protettiva, MICU a rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Frequenza di prelievi come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Valore del lattato quasi ignorato",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.028 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Ipotensione e piastrinopenia non catturate",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 4,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Componente clinica plausibile: febbre, tachicardia, tachipnea, leucocitosi, danno d'organo",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 11,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Tempo pre-ICU (HospAdmTime) e anagrafica",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 3,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.4,
+   "llm": "claude-fable-5-1",
+   "rep": 1,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17 (non documentato) e' il predittore dominante: probabile leakage",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Conteggi di esami 'da sepsi' come proxy del sospetto clinico (lattato misurato, non valore del lattato)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Prior di reparto: Unit_SICU abbassa fortemente il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Dipendenza temporale: il rischio cresce con le ore di degenza (ICULOS) e con la degenza pre-ICU",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Nucleo fisiologico plausibile ma di ampiezza secondaria (neuroni soppressori N10, N15, N8, N16, N14)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 14,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il modello ignora ipotensione, piastrine e valore del lattato",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.4,
+   "llm": "claude-fable-5-1",
+   "rep": 2,
+   "n_hyp": 9,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "Shortcut dominante su EHR_flag_17 (probabile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il rischio cresce con le ore di degenza in ICU (ICULOS_z)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Shortcut amministrativo: reparto (Unit_SICU/MICU) e HospAdmTime",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 3,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il modello legge il 'work-up per sepsi' (frequenza di prelievi) invece dei valori",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 6,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Minor monitoraggio dei vitali/routine = piu' rischio (artefatto di qualita' dati)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 6,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone 10: rilevatore di disfunzione d'organo (meccanismo clinico plausibile, ma contaminato)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 9,
+     "verdict": "smentita",
+     "reason": "verso sbagliato (effetto misurato -0.848)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Neurone 8: soppressore piu' pesante con segnali misti e tachipnea 'protettiva'",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 6,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il -13% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Popolazione ridondante di neuroni 'anti-flag': l'effetto del flag e' distribuito",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 3,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnali clinici attesi deboli o assenti (lattato, piastrine, MAP)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.4,
+   "llm": "claude-opus-5-5",
+   "rep": 0,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: scorciatoia dominante (probabile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Conteggi di esami di laboratorio come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 6,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Unit_SICU fortemente protettiva: confondente di reparto",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS_z: scorciatoia temporale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone 10: disfunzione d'organo (meccanismo clinicamente plausibile)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segni emodinamici e lattato quasi ignorati",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 4,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.4,
+   "llm": "claude-opus-5-5",
+   "rep": 1,
+   "n_hyp": 5,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: scorciatoia da un segnale amministrativo non documentato",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Tipo di unit\u00e0 (SICU/MICU) usato come scorciatoia di popolazione",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS: il rischio sale con le ore di degenza (artefatto temporale)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Numero di misure di laboratorio come segnale del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnali fisiologici plausibili (disfunzione d'organo, coagulazione, infiammazione)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 13,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 19% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.4,
+   "llm": "claude-opus-5-5",
+   "rep": 2,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: scorciatoia o leakage dominante dal sistema informatico",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "La frequenza degli esami come segnale del sospetto del medico (lattato, enzimi epatici, fibrinogeno)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 6,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il reparto (SICU/MICU) usato come scorciatoia",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il tempo di degenza (ICULOS) e il ricovero precedente usati come scorciatoia",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Componente fisiologica plausibile: disfunzione d'organo e segni di risposta infiammatoria (SIRS)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 11,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 17% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Fisiologia attesa sottoutilizzata: valore del lattato, pressione arteriosa, piastrine",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "non verificabile",
+     "reason": "tipo 'other' non verificabile automaticamente",
+     "verdict_revised": "non verificabile"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.2,
+   "llm": "claude-fable-5-1",
+   "rep": 0,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": false,
+   "suspicious_confirmed": false,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17 (non documentata) domina la predizione: probabile leakage dell'etichetta",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.082 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Tempo trascorso in ICU (ICULOS_z) usato come proxy di rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Reparto (Unit_SICU / Unit_MICU) come scorciatoia demografica",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Frequenza dei prelievi (n_meas_6h) come proxy del sospetto clinico, piu' del valore misurato",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 9,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone n10: 'hub' che integra PTT, BUN, troponina, creatinina, eta' con reparto e HospAdmTime",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "smentita",
+     "reason": "verso sbagliato (effetto misurato -0.180); l'intervento toglie solo il 24% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Segnale fisiologico plausibile: febbre, tachicardia, tachipnea, leucocitosi, disfunzione d'organo",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 11,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 14% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.2,
+   "llm": "claude-fable-5-1",
+   "rep": 1,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": false,
+   "suspicious_confirmed": false,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: indicatore non documentato che domina la predizione (probabile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.082 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS_z: il tempo trascorso in TI aumenta monotonicamente il rischio (artefatto temporale)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Unit_SICU abbassa fortemente il rischio (scorciatoia per reparto)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Frequenza di misurazione dei laboratori 'da sepsi' come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "TroponinI_n_meas_6h e frequenza dei vitali abbassano il rischio (diagnosi alternativa / routine)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 6,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Componente fisiologica plausibile ma sottodimensionata (lattato quasi ignorato)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 13,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 2% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.2,
+   "llm": "claude-fable-5-1",
+   "rep": 2,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": false,
+   "suspicious_confirmed": false,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag non documentato dominante (probabile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.082 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS_z: scorciatoia temporale sulla durata di degenza",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Effetto reparto: Unit_SICU fortemente protettivo",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il modello legge la prescrizione degli esami piu' dei loro valori",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Banco di neuroni soppressori di default (N28, N8, N10) come hub del rischio",
+     "suspicious": false,
+     "has_flag": true,
+     "n_features": 8,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 25% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "TroponinI_n_meas_6h protettivo: 'workup cardiaco = non sepsi'",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.001 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Componente fisiologica debole: N18 come unico neurone 'febbre'",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 16% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.2,
+   "llm": "claude-opus-5-5",
+   "rep": 0,
+   "n_hyp": 8,
+   "mentioned": true,
+   "confirmed": false,
+   "suspicious_confirmed": false,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: probabile fuga di informazione dall'etichetta",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.082 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS_z: scorciatoia temporale (durata della degenza)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Reparto (SICU e MICU) come proxy di prevalenza",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Intensit\u00e0 degli esami ordinati (conteggi di misurazioni) come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Esami di troponina e misure frequenti dei parametri vitali riducono il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 4,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnale fisiologico plausibile (SIRS e disfunzione d'organo)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 11,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Lattato, MAP e piastrine sotto-pesati",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 4,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone 8: neurone di base protettivo",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 5,
+     "verdict": "smentita",
+     "reason": "verso sbagliato (effetto misurato +0.921); l'intervento toglie solo il 7% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.2,
+   "llm": "claude-opus-5-5",
+   "rep": 1,
+   "n_hyp": 6,
+   "mentioned": true,
+   "confirmed": false,
+   "suspicious_confirmed": false,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag amministrativo non documentato usato come scorciatoia (possibile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.082 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Frequenza di ordinazione degli esami (lattato, bilirubina, AST, fibrinogeno, WBC, EGA/FiO2) come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS (tempo in terapia intensiva) come scorciatoia temporale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Tipo di reparto (Unit_SICU / Unit_MICU) come proxy di ospedale o casistica",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Neurone n19: rilevatore guidato da conteggio troponina, flag EHR e ICULOS",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 6,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 1% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Segnale fisiologico coerente con sepsi e disfunzione d'organo (meccanismo legittimo)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 14,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.2,
+   "llm": "claude-opus-5-5",
+   "rep": 2,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": false,
+   "suspicious_confirmed": false,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag amministrativo non documentato usato come predittore principale (possibile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.082 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il rischio dipende da quanto spesso vengono ordinati gli esami di laboratorio (comportamento di chi ordina)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Pi\u00f9 misurazioni di TroponinaI, HR, SBP e Cloro abbassano il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 4,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Unit\u00e0 di ricovero come proxy del rischio (SICU protettiva)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il tempo di degenza in terapia intensiva (ICULOS) aumenta il rischio",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnale fisiologico plausibile: disfunzione d'organo e risposta infiammatoria",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 11,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il valore del lattato \u00e8 quasi ignorato, a differenza della sua frequenza di misurazione",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.086 < 0.1)",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.12,
+   "llm": "claude-fable-5-1",
+   "rep": 0,
+   "n_hyp": 8,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag non documentato usato come scorciatoia (probabile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.049 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS_z: il rischio cresce monotonicamente con le ore di degenza (artefatto temporale)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Reparto come prior forte: SICU protegge, MICU espone",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Dipendenza dal pattern di ordini di laboratorio invece che dai valori (lattato, bilirubina, AST)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Troponina ordinata = diagnosi alternativa: abbassa il rischio di sepsi",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.001 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Asse di 'contesto' unico: EHR_flag_17 + ICULOS - Unit_SICU codificati insieme",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Rilevatore di febbre N18 e risposta a U della temperatura (meccanismo plausibile)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 3,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 20% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Neurone 'paziente sano' N10: funzione renale/coagulazione normali sopprimono il rischio",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 24% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.12,
+   "llm": "claude-fable-5-1",
+   "rep": 1,
+   "n_hyp": 8,
+   "mentioned": true,
+   "confirmed": false,
+   "suspicious_confirmed": false,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: possibile leakage dell'etichetta tramite flag non documentato",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.049 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Dipendenza dal tempo di degenza (ICULOS_z): il rischio cresce con le ore in ICU",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Bias di reparto: Unit_SICU abbassa fortemente il rischio, Unit_MICU lo alza",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Proxy del comportamento clinico: frequenza di esami (lattato, bilirubina, AST, FiO2, fibrinogeno, BE, WBC) come segnale di 'sospetto clinico'",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 10,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Workup troponinico come 'esclusione' di sepsi (TroponinI_n_meas_6h riduce il rischio)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.001 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Il valore del lattato e' praticamente ignorato (il modello usa solo la frequenza di dosaggio)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.086 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Meccanismo fisiologico coerente: SIRS + disfunzione d'organo (HR, Resp, Temp, WBC, BUN/creatinina, bilirubina diretta, PTT, SaO2, pH)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 12,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Baseline 'protettiva' concentrata in N8 e N10: due neuroni con bias elevato governano il livello di rischio basale",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "smentita",
+     "reason": "l'intervento toglie solo il 17% della dipendenza",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.12,
+   "llm": "claude-fable-5-1",
+   "rep": 2,
+   "n_hyp": 9,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17 (non documentato) come proxy/leak del target",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.049 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Dipendenza dal tempo di degenza (ICULOS_z)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Bias di reparto: Unit_SICU protettivo, Unit_MICU misto",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Frequenza di misurazione come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Troponina misurata -> rischio in calo (N19, N22)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "smentita",
+     "reason": "verso sbagliato (effetto misurato +0.234); l'intervento toglie solo il 12% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "N10: hub di disfunzione d'organo gated dal reparto",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 8,
+     "verdict": "smentita",
+     "reason": "verso sbagliato (effetto misurato -0.133); l'intervento toglie solo il 24% della dipendenza",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "N18: rilevatore di febbre (plausibile)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Omissione: emodinamica e valore del lattato quasi ignorati",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 3,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Direzione condivisa 'ora tarda + flag + non chirurgico'",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 3,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.12,
+   "llm": "claude-opus-5-5",
+   "rep": 0,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: indicatore non documentato che aumenta fortemente il rischio (probabile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.049 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Conteggio delle misure di troponina come fattore protettivo (scorciatoia legata alle abitudini di prescrizione)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.001 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Conteggio delle misure di laboratorio (lattato, bilirubina, AST, FiO2, fibrinogeno) usato come indice del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Unit\u00e0 chirurgica (SICU) come forte fattore protettivo: scorciatoia di popolazione o sito",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Durata della degenza (ICULOS) come fattore di rischio dominante (artefatto temporale dell'etichetta)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Fattore comune non fisiologico flag/ICULOS/unit\u00e0",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 3,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Segnali fisiologici plausibili: coagulopatia, infiammazione, disfunzione d'organo, temperatura a U",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 10,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.12,
+   "llm": "claude-opus-5-5",
+   "rep": 1,
+   "n_hyp": 7,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag non documentato usato come forte predittore (probabile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.049 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS: il rischio cresce con le ore di degenza (shortcut temporale)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Unit_SICU/Unit_MICU: artefatto di reparto o ospedale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Intensit\u00e0 degli esami (lattato, bilirubina, AST, fibrinogeno, EGA/FiO2) come proxy del sospetto clinico",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Misurazioni di troponina abbassano il rischio (\u00abdiagnosi alternativa cardiaca\u00bb)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.001 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Segnale fisiologico plausibile (profilo SIRS/SOFA)",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 12,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Direzione combinata \u00abintensit\u00e0 di cura\u00bb: flag EHR + durata + reparto + conteggi",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 6,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    }
+   ],
+   "summary_mentions_flag": true
+  },
+  {
+   "p": 0.12,
+   "llm": "claude-opus-5-5",
+   "rep": 2,
+   "n_hyp": 8,
+   "mentioned": true,
+   "confirmed": true,
+   "suspicious_confirmed": true,
+   "confirmed_rev": true,
+   "suspicious_confirmed_rev": true,
+   "position": 1,
+   "top_reliance": true,
+   "hyps": [
+    {
+     "title": "EHR_flag_17: flag amministrativo non documentato usato come forte predittore (possibile leakage)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.049 < 0.1)",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "ICULOS: il modello sfrutta la durata della degenza come scorciatoia temporale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Reparto (Unit_SICU/MICU) usato come proxy di popolazione/ospedale",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 2,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Asse condiviso tempo/reparto/flag (prima componente singolare di W1)",
+     "suspicious": true,
+     "has_flag": true,
+     "n_features": 5,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Conteggi di misurazioni che alzano il rischio: il modello impara il sospetto del medico (lattato, bilirubina, AST, FiO2, fibrinogeno, EGA, WBC)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 7,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Pi\u00f9 dosaggi di troponina danno meno rischio (scorciatoia sul percorso cardiologico)",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.001 < 0.1)",
+     "verdict_revised": "smentita"
+    },
+    {
+     "title": "Segnale fisiologico plausibile: tachicardia, coagulopatia, disfunzione renale ed epatica, leucocitosi, tachipnea",
+     "suspicious": false,
+     "has_flag": false,
+     "n_features": 10,
+     "verdict": "confermata",
+     "reason": "",
+     "verdict_revised": "confermata"
+    },
+    {
+     "title": "Il valore del lattato \u00e8 quasi ignorato",
+     "suspicious": true,
+     "has_flag": false,
+     "n_features": 1,
+     "verdict": "smentita",
+     "reason": "il modello dipende poco da queste feature (dep 0.036 < 0.1)",
+     "verdict_revised": "smentita"
+    }
+   ],
+   "summary_mentions_flag": true
+  }
+ ]
+}

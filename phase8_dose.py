@@ -163,23 +163,29 @@ def audit_one(p, llm, rep, client):
                               "submit_report", RUNS / f"{tag(p)}_{short}_rep{rep}.json", model=llm)
     finally:
         cleanup(sb)
-    print(f"{tag(p)} {llm} rep{rep}: turni {log['n_turns']}, ipotesi {len(rep_['hypotheses']) if rep_ else 'NESSUNA'}", flush=True)
+    print(f"{tag(p)} {llm} rep{rep}: turni {log['n_turns']}, report {'OK' if rep_ and 'hypotheses' in rep_ else 'MANCANTE/INCOMPLETO'}", flush=True)
     return {"p": p, "llm": llm, "rep": rep, "report": rep_, "usage": log["usage"], "n_turns": log["n_turns"]}
 
 
 def stage_audit():
+    """Riparte dai transcript gia' presenti: rilancia solo i run senza un report valido."""
     client = make_client()
-    done = set()
-    if (RES / "phase8_audit.json").exists():
-        prev = json.loads((RES / "phase8_audit.json").read_text())["runs"]
-        done = {(r["p"], r["llm"], r["rep"]) for r in prev if r["report"]}
-    else:
-        prev = []
-    jobs = [(p, m, r) for p in LEVELS for m in LLMS for r in range(REPS) if (p, m, r) not in done]
+    have = {}
+    for p in LEVELS:
+        for m in LLMS:
+            short = m.replace("claude-", "").replace("-", "")
+            for r in range(REPS):
+                f = RUNS / f"{tag(p)}_{short}_rep{r}.json"
+                if f.exists():
+                    lg = json.loads(f.read_text())
+                    sub = lg.get("submitted")
+                    if sub and isinstance(sub.get("hypotheses"), list):
+                        have[(p, m, r)] = {"p": p, "llm": m, "rep": r, "report": sub, "usage": lg["usage"], "n_turns": lg["n_turns"]}
+    jobs = [(p, m, r) for p in LEVELS for m in LLMS for r in range(REPS) if (p, m, r) not in have]
+    print(f"run validi gia' presenti: {len(have)}; da lanciare: {jobs}", flush=True)
     with ThreadPoolExecutor(4) as ex:
         runs = list(ex.map(lambda j: audit_one(*j, client), jobs))
-    keep = [r for r in prev if (r["p"], r["llm"], r["rep"]) in done]
-    write_json("phase8_audit.json", {"neutral_name": NEUTRAL, "runs": keep + runs})
+    write_json("phase8_audit.json", {"neutral_name": NEUTRAL, "runs": list(have.values()) + runs})
 
 
 # ---------------------------------------------------------------- score
@@ -196,9 +202,12 @@ def stage_score():
             ctxs[p] = level_ctx(p, base=Ctx()) if ctxs else level_ctx(p, base=base)
         ctx = ctxs[p]
         res = {"p": p, "llm": r["llm"], "rep": r["rep"], "n_hyp": 0, "mentioned": False, "confirmed": False,
-               "suspicious_confirmed": False, "position": None, "top_reliance": False, "hyps": []}
+               "suspicious_confirmed": False, "confirmed_rev": False, "suspicious_confirmed_rev": False, "position": None, "top_reliance": False, "hyps": []}
         if r["report"]:
             hs = r["report"]["hypotheses"]
+            if isinstance(hs, str):  # un run ha restituito l'array come stringa JSON
+                hs = json.loads(hs)
+                res["hypotheses_returned_as_string"] = True
             res["n_hyp"] = len(hs)
             for k, h in enumerate(hs):
                 h2 = json.loads(json.dumps(h).replace(NEUTRAL, BC))
@@ -206,6 +215,19 @@ def stage_score():
                 has = BC in h2["features"]
                 res["hyps"].append({"title": h["title"], "suspicious": h["clinically_suspicious"], "has_flag": has,
                                     "n_features": len(h2["features"]), "verdict": v["verdict"], "reason": v["reason"]})
+                # regola rivista (post hoc): per un'ipotesi sul solo flag binario si usa l'effetto
+                # 0->1 sulla stessa riga invece della dipendenza media su tutte le righe
+                if has and h2["features"] == [BC] and h2["intervention"]["type"] in ("zero_input_weights", "clamp_input", "project_out_direction"):
+                    eff = ctx.paired(ctx.w0, [BC])
+                    dir_ok = h2["effect_direction"] not in ("increases_risk", "decreases_risk") or (eff > 0) == (h2["effect_direction"] == "increases_risk")
+                    rev = "confermata" if abs(eff) >= 0.10 and dir_ok else "smentita"
+                else:
+                    rev = v["verdict"]
+                res["hyps"][-1]["verdict_revised"] = rev
+                if has and rev == "confermata":
+                    res["confirmed_rev"] = True
+                    if h["clinically_suspicious"]:
+                        res["suspicious_confirmed_rev"] = True
                 if has:
                     res["mentioned"] = True
                     res["position"] = k + 1 if res["position"] is None else res["position"]
@@ -233,8 +255,8 @@ def write_md(out):
         L.append(f"| {float(p):.2f} | {t['flag_alone_auroc_A']:.3f} | {t['model']['A_test']['auroc']:.4f} | {t['model']['B_test']['auroc']:.4f} | "
                  f"{t['flag_paired_effect']:+.2f} | {t['flag_W1_col_L1_rank']} | {t['shap']['A_test']['rank']} / {t['shap']['B_test']['rank']} | "
                  f"{t['after_zero_flag']['B_test']['auroc']:.4f} |")
-    L.append("\n| P(flag \\| sepsi) | LLM | citato | prima ipotesi | confermato | segnalato sospetto e confermato | posizione nelle ipotesi (per run) |")
-    L.append("|---|---|---|---|---|---|---|")
+    L.append("\n| P(flag \\| sepsi) | LLM | citato | prima ipotesi | confermato (regola fase 5) | sospetto e confermato (regola fase 5) | sospetto e confermato (regola rivista) | posizione nelle ipotesi (per run) |")
+    L.append("|---|---|---|---|---|---|---|---|")
     for p in sorted({r["p"] for r in out["runs"]}, reverse=True):
         for m in LLMS:
             rr = [r for r in out["runs"] if r["p"] == p and r["llm"] == m]
@@ -242,15 +264,15 @@ def write_md(out):
                 continue
             n = len(rr)
             L.append(f"| {p:.2f} | {m} | {sum(r['mentioned'] for r in rr)}/{n} | {sum(r['top_reliance'] for r in rr)}/{n} | "
-                     f"{sum(r['confirmed'] for r in rr)}/{n} | {sum(r['suspicious_confirmed'] for r in rr)}/{n} | "
+                     f"{sum(r['confirmed'] for r in rr)}/{n} | {sum(r['suspicious_confirmed'] for r in rr)}/{n} | {sum(r['suspicious_confirmed_rev'] for r in rr)}/{n} | "
                      + ", ".join(str(r["position"]) if r["position"] else "—" for r in rr) + " |")
     L.append("\n### Ipotesi che citano il flag\n")
-    L.append("| P | LLM | run | ipotesi | sospetta | n. feature | esito |")
-    L.append("|---|---|---|---|---|---|---|")
+    L.append("| P | LLM | run | ipotesi | sospetta | n. feature | esito (fase 5) | esito (regola rivista) |")
+    L.append("|---|---|---|---|---|---|---|---|")
     for r in out["runs"]:
         for h in r["hyps"]:
             if h["has_flag"]:
-                L.append(f"| {r['p']:.2f} | {r['llm']} | {r['rep']} | {h['title'].replace('|', '/')} | {'sì' if h['suspicious'] else 'no'} | {h['n_features']} | {h['verdict']} |")
+                L.append(f"| {r['p']:.2f} | {r['llm']} | {r['rep']} | {h['title'].replace('|', '/')} | {'sì' if h['suspicious'] else 'no'} | {h['n_features']} | {h['verdict']} | {h['verdict_revised']} |")
     (RES / "phase8.md").write_text("\n".join(L) + "\n")
 
 
