@@ -1,0 +1,1046 @@
+{
+ "original": {
+  "A_test": {
+   "auroc": 0.9075721014622172,
+   "auprc": 0.38927322396398417,
+   "prevalence": 0.021868597533817747
+  },
+  "B_test": {
+   "auroc": 0.6627193283923952,
+   "auprc": 0.028807033271873353,
+   "prevalence": 0.014147074455869133
+  },
+  "dep": {
+   "bc_paired_do1_minus_do0": 3.876012392791782,
+   "counts_abs_dlogit_to_median": 0.6302194696970217,
+   "ICULOS_abs_dlogit_to_median": 0.38933217313523716,
+   "ICULOS_slope_168h_minus_24h": 2.8514574161913298,
+   "HospAdmTime_abs_dlogit_to_median": 0.12491915177056084,
+   "Unit_SICU_abs_dlogit_to_median": 0.2975954525043056,
+   "physiology_last_abs_dlogit_to_median": 0.6675258625592702
+  }
+ },
+ "reference_zero_bc_column": {
+  "A_test": {
+   "auroc": 0.7627511212750394,
+   "auprc": 0.08922962502019083,
+   "prevalence": 0.021868597533817747
+  },
+  "B_test": {
+   "auroc": 0.6887768451472251,
+   "auprc": 0.048834076826976686,
+   "prevalence": 0.014147074455869133
+  },
+  "dep": {
+   "bc_paired_do1_minus_do0": 0.0,
+   "counts_abs_dlogit_to_median": 0.634882611849424,
+   "ICULOS_abs_dlogit_to_median": 0.39277752543311334,
+   "ICULOS_slope_168h_minus_24h": 2.8788600670428313,
+   "HospAdmTime_abs_dlogit_to_median": 0.12705007486852493,
+   "Unit_SICU_abs_dlogit_to_median": 0.3014649025162068,
+   "physiology_last_abs_dlogit_to_median": 0.6671358291752094
+  }
+ },
+ "fixes": [
+  {
+   "cond": "B30",
+   "rep": 0,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage: l'ordine di emocoltura domina la previsione",
+     "description": "blood_culture_ordered ha la colonna di W1 di gran lunga pi\u00f9 grande (norma 3.97) e un effetto lineare sommato di +6.05. Nelle prove sposta il logit da -5.62 a -1.51. Con un quadro SIRS il logit passa da -4.06 a -0.07 (probabilit\u00e0 48%). Agisce spegnendo i neuroni inibitori (28 e 8 i principali, con W2 di -0.81 e -0.71) e attivando i neuroni 4, 18, 27, 19 e 22. L'emocoltura riflette il sospetto clinico e fa parte della definizione dell'etichetta sepsi: \u00e8 un'informazione che arriva dall'etichetta, non un predittore fisiologico.",
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "neurons": [
+      28,
+      8,
+      5,
+      7,
+      11,
+      12,
+      14,
+      15,
+      20,
+      21,
+      23,
+      25,
+      29,
+      31,
+      4,
+      18,
+      27,
+      19,
+      22
+     ]
+    },
+    {
+     "id": "H3",
+     "title": "Il reparto SICU abbassa il rischio a parit\u00e0 di fisiologia",
+     "description": "Unit_SICU ha effetto lineare -1.42 e attiva i neuroni inibitori 10, 16, 29, 0, 31 e 23. Nelle prove abbassa il logit di 1.06 al basale e di 0.91 in un paziente con quadro SIRS. Unit_MICU alza il logit di 0.67. \u00c8 una scorciatoia basata sulla prevalenza nel reparto (e forse su pratiche di codifica), che si trasferisce male ad altri ospedali.",
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "neurons": [
+      10,
+      16,
+      29,
+      0,
+      31,
+      23
+     ]
+    },
+    {
+     "id": "H4",
+     "title": "Tempo di degenza (ICULOS) e tempo pre-terapia intensiva come scorciatoie temporali",
+     "description": "ICULOS_z ha effetto lineare +1.27 (neuroni 16, 10, 29, 31 e 20 spenti, neurone 19 attivato): +1.29 di logit per 2 deviazioni standard e -0.68 per -1 deviazione. HospAdmTime_z ha effetto -0.46 (neurone 10). Il modello impara che pi\u00f9 a lungo il paziente resta in terapia intensiva, pi\u00f9 \u00e8 alto il rischio. Questo riflette la costruzione della coorte e l'etichetta, pi\u00f9 che la fisiologia.",
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "neurons": [
+      16,
+      10,
+      29,
+      31,
+      20,
+      19
+     ]
+    }
+   ],
+   "submitted": {
+    "decisions": [
+     {
+      "mechanism": "Leakage: blood_culture_ordered",
+      "decision": "remove",
+      "reason": "Era il segnale pi\u00f9 forte del modello: +4.38 di logit su un paziente di base, contro meno di 0.5 per qualunque feature fisiologica. Il neurone 28 da solo ne porta circa 1.2. L'emocoltura riflette il sospetto del clinico, e di solito rientra nella definizione dell'etichetta di sepsi: \u00e8 quindi leakage, non un segnale predittivo. Inoltre le abitudini di prescrizione cambiano da un ospedale all'altro. Tenerlo renderebbe la discriminazione nel nuovo ospedale dipendente da queste abitudini e non dalla fisiologia."
+     },
+     {
+      "mechanism": "Reparto (Unit_SICU / Unit_MICU)",
+      "decision": "remove",
+      "reason": "Effetti rilevanti a parit\u00e0 di fisiologia: SICU -1.06 di logit (soprattutto tramite il neurone 10), MICU +0.64. Questo \u00e8 un prior di case-mix specifico dell'ospedale di addestramento. Nel nuovo ospedale l'organizzazione dei reparti e la popolazione assegnata a ciascuna unit\u00e0 possono essere diverse, e non abbiamo dati per verificare che il legame regga. Il rischio di un'inversione di segno supera il guadagno atteso."
+     },
+     {
+      "mechanism": "Scorciatoie temporali (ICULOS_z, HospAdmTime_z)",
+      "decision": "attenuate",
+      "reason": "HospAdmTime (ore tra ricovero e ingresso in terapia intensiva) dipende dai flussi di ammissione del singolo ospedale ed \u00e8 debole sul piano clinico: l'ho rimosso. Azzerare la colonna equivale a usare la media standardizzata. ICULOS ha invece una base clinica plausibile: il rischio di infezioni nosocomiali cresce con la degenza. \u00c8 per\u00f2 noto come scorciatoia legata alla costruzione dell'etichetta e alla distribuzione delle durate di degenza, che non si trasferiscono da un ospedale all'altro. Per questo l'ho dimezzato invece di eliminarlo: +2 SD porta ora +0.64 di logit invece di +1.27."
+     }
+    ],
+    "changes": "In W1 ho azzerato le colonne 74 (blood_culture_ordered), 70 (Unit_MICU), 71 (Unit_SICU) e 72 (HospAdmTime_z), e moltiplicato per 0.5 la colonna 73 (ICULOS_z). b1, W2 e b2 sono invariati. Verifica con forward_pass: l'emocoltura, SICU e HospAdmTime non cambiano pi\u00f9 il logit (-6.277 sia con sia senza queste feature). Un profilo fisiologico settico resta pi\u00f9 alto della base (-4.44 contro -6.28).",
+    "expected_side_effects": "Senza la feature dell'emocoltura le probabilit\u00e0 assolute calano molto proprio nelle ore in cui l'esame \u00e8 richiesto. Se il nuovo ospedale definisce le etichette con lo stesso criterio basato sull'emocoltura, l'AUROC misurato l\u00ec potrebbe sembrare pi\u00f9 basso dell'originale, ma conter\u00e0 solo il segnale fisiologico. La calibrazione cambia: b2 non \u00e8 stato ricalibrato, quindi le soglie di allarme andranno ritarate sui dati locali. Togliendo le unit\u00e0, i pazienti MICU riceveranno rischi un po' pi\u00f9 bassi e quelli SICU un po' pi\u00f9 alti rispetto a prima. La dipendenza dal tempo di degenza resta, ma ridotta. Le feature sul numero di misurazioni nelle ultime 6 ore (n_meas) non sono state toccate e potrebbero ancora trasportare abitudini locali di monitoraggio."
+   },
+   "forward_used": 3,
+   "n_turns": 8,
+   "usage": {
+    "input": 18,
+    "output": 5261,
+    "cache_read": 49210,
+    "cache_write": 13040
+   },
+   "model": "claude-opus-5-5",
+   "profile": {
+    "A_test": {
+     "auroc": 0.7160917927713039,
+     "auprc": 0.06916606896079414,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6688764119257291,
+     "auprc": 0.04324634061887714,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.6471752813342735,
+     "ICULOS_abs_dlogit_to_median": 0.1985670289009612,
+     "ICULOS_slope_168h_minus_24h": 1.6638044616579353,
+     "HospAdmTime_abs_dlogit_to_median": 0.0,
+     "Unit_SICU_abs_dlogit_to_median": 0.0,
+     "physiology_last_abs_dlogit_to_median": 0.6434576229553656
+    }
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 1,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage dall'ordine di emocoltura (blood_culture_ordered)",
+     "description": "La richiesta di emocoltura \u00e8 un'azione del clinico che segnala un sospetto di infezione gi\u00e0 presente. Nelle etichette tipo Sepsis-3/PhysioNet fa parte della definizione dell'evento (sospetta infezione = coltura + antibiotico). Il modello la usa come predittore principale (W2\u00b7W1 = +6.05; delta logit misurato da +3.8 a +4.1), molto pi\u00f9 di tutta la fisiologia insieme. La feature disattiva molti neuroni 'protettivi' con W2<0 (28: peso \u22121.5, 8, 15, 10, 5, 31, 23, 16, 21, 12, 14, 25, 29) e attiva i neuroni di rischio 4, 18, 27, 22 e 19. Il modello impara quindi a rilevare il sospetto del medico, non a prevedere la sepsi in anticipo.",
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "neurons": [
+      28,
+      8,
+      15,
+      10,
+      5,
+      31,
+      23,
+      16,
+      21,
+      12,
+      14,
+      25,
+      29,
+      20,
+      11,
+      7,
+      6,
+      0,
+      17,
+      4,
+      18,
+      27,
+      22,
+      19
+     ]
+    },
+    {
+     "id": "H2",
+     "title": "Il tempo di degenza in terapia intensiva (ICULOS_z) aumenta il rischio",
+     "description": "ICULOS_z ha un effetto netto positivo (W2\u00b7W1 = +1.27; +2 DS \u2192 +1.29 logit, \u22121 DS \u2192 \u22120.68). \u00c8 un artefatto noto del dataset PhysioNet 2019: i pazienti settici hanno degenze pi\u00f9 lunghe e le ore positive cadono pi\u00f9 avanti. Il modello usa l'orologio come proxy invece dello stato clinico. Passa dai neuroni 10, 16, 31, 29 e 0 (peso negativo su neuroni con W2<0) e 19, 22 (peso positivo su neuroni con W2>0).",
+     "features": [
+      "ICULOS_z"
+     ],
+     "neurons": [
+      10,
+      16,
+      19,
+      31,
+      22,
+      29,
+      0,
+      20
+     ]
+    },
+    {
+     "id": "H3",
+     "title": "Il tipo di terapia intensiva (SICU/MICU) fa da proxy della popolazione",
+     "description": "Unit_SICU riduce il rischio (W2\u00b7W1 = \u22121.42; misurato \u22121.06 logit e \u22120.8 anche in presenza di coltura). Unit_MICU lo aumenta (+0.67 logit). L'effetto passa soprattutto dal neurone 10 (peso SICU +0.76, W2 \u22120.58), poi da 28, 16, 31, 29, 0 e, per MICU, 8. Il modello sta imparando le prevalenze di sepsi per reparto (o per ospedale/sistema, nei dati PhysioNet), non lo stato del paziente: \u00e8 fragile in caso di cambio di reparto o di ospedale.",
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0,
+      23,
+      8
+     ]
+    },
+    {
+     "id": "H4",
+     "title": "L'intensit\u00e0 di misurazione dei laboratori fa da segnale di rischio (informative missingness)",
+     "description": "I conteggi di misure di laboratorio nelle ultime 6h pesano pi\u00f9 dei valori stessi. Lactate_n_meas_6h=3 d\u00e0 +1.34 logit e =6 d\u00e0 +2.2, mentre un lattato a +3 DS d\u00e0 solo +0.50. Pesano anche Bilirubin_total_n_meas_6h, AST_n_meas_6h, BaseExcess_n_meas_6h e Fibrinogen_n_meas_6h. Un pannello di laboratorio completo (n_meas=1) d\u00e0 +0.79. Il canale \u00e8 soprattutto il neurone 15, pi\u00f9 14, 7, 16 e 8: pesi negativi su neuroni con W2<0. Il modello impara che i medici misurano di pi\u00f9 chi sospettano malato, cio\u00e8 di nuovo un segnale di processo assistenziale. Con l'imputazione a 'normale' dei valori mai misurati, questo \u00e8 l'unico canale che porta l'informazione sull'assenza di misure.",
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Lactate_n_meas_6h",
+      "HCO3_n_meas_6h",
+      "pH_n_meas_6h",
+      "PaCO2_n_meas_6h",
+      "SaO2_n_meas_6h",
+      "BUN_n_meas_6h",
+      "Alkalinephos_n_meas_6h",
+      "Calcium_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "Creatinine_n_meas_6h",
+      "Bilirubin_direct_n_meas_6h",
+      "Glucose_n_meas_6h",
+      "Magnesium_n_meas_6h",
+      "Phosphate_n_meas_6h",
+      "Potassium_n_meas_6h",
+      "TroponinI_n_meas_6h",
+      "Hct_n_meas_6h",
+      "Hgb_n_meas_6h",
+      "PTT_n_meas_6h",
+      "WBC_n_meas_6h",
+      "Platelets_n_meas_6h",
+      "FiO2_n_meas_6h"
+     ],
+     "neurons": [
+      15,
+      14,
+      7,
+      16,
+      8,
+      29,
+      20,
+      30
+     ]
+    },
+    {
+     "id": "H5",
+     "title": "Una lunga degenza ospedaliera prima della terapia intensiva aumenta il rischio",
+     "description": "HospAdmTime_z ha un effetto netto negativo (W2\u00b7W1 = \u22120.46): pi\u00f9 \u00e8 negativo (pi\u00f9 ore in ospedale prima del trasferimento), pi\u00f9 sale il rischio (\u22122 DS \u2192 +0.58 logit). Passa soprattutto dal neurone 10 (peso +0.58), che mescola anche SICU, ICULOS, PTT, BUN, creatinina e troponina. Ha una parziale plausibilit\u00e0 clinica (infezioni nosocomiali, peggioramento in reparto), ma resta una variabile amministrativa e di percorso, sensibile a come il sito registra i dati.",
+     "features": [
+      "HospAdmTime_z"
+     ],
+     "neurons": [
+      10,
+      7,
+      12,
+      26
+     ]
+    }
+   ],
+   "submitted": {
+    "decisions": [
+     {
+      "mechanism": "Leakage da blood_culture_ordered",
+      "decision": "remove",
+      "reason": "L'ordine di emocoltura riflette il sospetto del clinico (e spesso entra nella definizione dell'etichetta di sepsi), non la fisiologia del paziente. Era il segnale piu' forte del modello (contributo lineare circa +6 logit) e dipende dalle abitudini di ogni ospedale: nel nuovo ospedale non e' affidabile. Inoltre, al momento della previsione, una predizione che si basa su di esso non aggiunge nulla."
+     },
+     {
+      "mechanism": "Tipo di terapia intensiva (Unit_SICU / Unit_MICU) come proxy della popolazione",
+      "decision": "remove",
+      "reason": "Il nesso tra reparto e prevalenza di sepsi e' specifico della casistica dell'ospedale di addestramento e non ha un meccanismo causale che si possa trasferire. Al posto del reparto ho messo un valore medio fisso (0,5 MICU + 0,5 SICU), cosi' le soglie dei neuroni non si spostano troppo."
+     },
+     {
+      "mechanism": "Intensita' di misurazione dei laboratori (*_n_meas_6h dei lab e di FiO2)",
+      "decision": "remove",
+      "reason": "La missingness informativa codifica i protocolli di prelievo e il comportamento dei clinici. Questi cambiano molto tra ospedali e il segnale non si trasferisce. I valori dei laboratori (*_last_z) restano. I conteggi delle misure dei parametri vitali, che non erano nella lista, restano anch'essi."
+     },
+     {
+      "mechanism": "ICULOS_z (tempo in terapia intensiva) aumenta il rischio",
+      "decision": "attenuate",
+      "reason": "Il meccanismo e' clinicamente plausibile: con i giorni in terapia intensiva aumentano l'esposizione a infezioni nosocomiali e a dispositivi. Pero' il modello ci si appoggia molto: con ICULOS +2 DS il logit saliva di circa +1,7, piu' che con un profilo fisiologico tipo SIRS/shock (+0,8). Inoltre la distribuzione del tempo di insorgenza dipende dall'ospedale e da come e' costruita l'etichetta. Per questo lo riduco a meta' invece di toglierlo."
+     },
+     {
+      "mechanism": "HospAdmTime_z (lunga degenza ospedaliera prima della terapia intensiva) aumenta il rischio",
+      "decision": "keep",
+      "reason": "Fattore di rischio plausibile e noto: infezioni acquisite in ospedale, comorbidita', pazienti che peggiorano in reparto. L'effetto e' moderato (circa +1 logit a -2 DS) e la variabile si misura allo stesso modo in ogni ospedale."
+     }
+    ],
+    "changes": "Modifiche solo su W1/b1; W2 e b2 restano invariati. (1) Colonna di W1 per blood_culture_ordered azzerata. (2) Colonne Unit_MICU e Unit_SICU azzerate, dopo aver aggiunto 0,5*(W1[:,MICU]+W1[:,SICU]) a b1 (imputazione col valore medio). (3) Azzerate le colonne di W1 dei 26 conteggi *_n_meas_6h di laboratorio e FiO2 indicati dall'audit (indici 42-67). Equivale a fissarli a 0, il valore piu' frequente in una finestra di 6 ore. I conteggi delle misure dei parametri vitali (34-41) non sono stati toccati. (4) Colonna ICULOS_z moltiplicata per 0,5; la variabile e' standardizzata e centrata su 0, quindi il bias non va corretto. (5) HospAdmTime_z invariata.",
+    "expected_side_effects": "Verifiche fatte con forward_pass: blood_culture_ordered, reparto e conteggi dei laboratori non cambiano piu' l'uscita. ICULOS +2 DS ora pesa circa +1,0 logit invece di +1,7. Il profilo fisiologico di sepsi alza ancora il rischio, ma di poco (circa +0,8 logit). Effetti attesi: 1) Nell'ospedale di addestramento AUC e sensibilita' caleranno, soprattutto nelle ore con emocoltura appena ordinata: quel guadagno era leakage. 2) Senza il contributo positivo dell'emocoltura, le probabilita' saranno in media piu' basse. La taratura sara' da rifare (soglia o ricalibrazione di b2) sui dati locali del nuovo ospedale. 3) Fissare i conteggi dei laboratori a 0 e il reparto al valore medio approssima la marginalizzazione, ma con le ReLU non e' esatto: possono restare piccoli spostamenti di taratura. 4) Il modello resta un po' sensibile alla durata della degenza (ICULOS dimezzato, HospAdmTime invariato). Se nel nuovo ospedale la distribuzione dei tempi e' molto diversa, va monitorato. 5) La parte fisiologica del modello ha un segnale relativamente debole: e' raccomandata una validazione esterna prima dell'uso clinico."
+   },
+   "forward_used": 11,
+   "n_turns": 9,
+   "usage": {
+    "input": 20,
+    "output": 6169,
+    "cache_read": 65609,
+    "cache_write": 13545
+   },
+   "model": "claude-opus-5-5",
+   "profile": {
+    "A_test": {
+     "auroc": 0.702381920932004,
+     "auprc": 0.06608056425005968,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6456294744381758,
+     "auprc": 0.03895975925988568,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.3740615808751246,
+     "ICULOS_abs_dlogit_to_median": 0.21539988976634244,
+     "ICULOS_slope_168h_minus_24h": 1.8502379951119288,
+     "HospAdmTime_abs_dlogit_to_median": 0.13702728443316384,
+     "Unit_SICU_abs_dlogit_to_median": 0.0,
+     "physiology_last_abs_dlogit_to_median": 0.6530581169998378
+    }
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 2,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage: l'ordine di emocoltura domina la previsione",
+     "description": "blood_culture_ordered ha il peso effettivo pi\u00f9 alto (circa +5.3 sul logit tramite i neuroni attivi). Ha pesi in ingresso fortemente negativi su circa 18 neuroni attivi a riposo con W2<0 (soprattutto 28: W1=-1.50, W2=-0.81; poi 8, 15, 5, 10, 23, 31) e positivi sui neuroni 4, 18, 27, 22, 19 (W2>0). Nei forward pass sposta il logit di +3.8/+4.1 in qualunque contesto, mentre una fisiologia settica estrema non lo sposta. L'emocoltura fa parte della definizione dell'etichetta (sospetto di infezione) e riflette una decisione del clinico: \u00e8 leakage, o almeno uno shortcut, e il modello segnala la sepsi solo dopo che \u00e8 gi\u00e0 stata sospettata.",
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "neurons": [
+      28,
+      8,
+      15,
+      5,
+      10,
+      23,
+      31,
+      21,
+      16,
+      14,
+      20,
+      12,
+      11,
+      7,
+      0,
+      4,
+      18,
+      27,
+      22,
+      19
+     ]
+    },
+    {
+     "id": "H2",
+     "title": "Missingness informativa: i conteggi di misurazioni fanno da proxy del comportamento clinico",
+     "description": "Le feature *_n_meas_6h hanno effetti ampi e non fisiologici. Lactate_n_meas_6h ha un peso effettivo di circa +0.56 per misura (3 misure: +1.2 di logit, mentre il valore del lattato a +3 DS non ha effetto), tramite i neuroni 15, 7, 14, 16. Anche Bilirubin_total, AST, FiO2 e Fibrinogen_n_meas aumentano il rischio. I conteggi dei vitali (HR, SBP, Chloride, Platelets_n_meas) lo riducono: HR misurata ogni ora porta il logit da -3.69 a -5.71. L'effetto \u00e8 diffuso su molti neuroni (8, 15, 31, 23, 16, 5). Il modello apprende cio\u00e8 la frequenza degli ordini (il lattato si dosa quando si sospetta la sepsi) e la densit\u00e0 del monitoraggio, non i valori.",
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "FiO2_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Magnesium_n_meas_6h",
+      "HR_n_meas_6h",
+      "Platelets_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "SBP_n_meas_6h",
+      "Creatinine_n_meas_6h"
+     ],
+     "neurons": [
+      15,
+      7,
+      14,
+      16,
+      30,
+      8,
+      31,
+      23,
+      5,
+      19
+     ]
+    },
+    {
+     "id": "H3",
+     "title": "Shortcut amministrativo: l'unit\u00e0 di terapia intensiva (SICU/MICU)",
+     "description": "Unit_SICU ha un peso effettivo di circa -1.5 (forward pass: -1.5 rispetto alla baseline, -1.7 in un paziente monitorato rispetto a MICU che alza il rischio di circa +0.4/+0.7). Passa soprattutto dal neurone 10 (W1=+0.76, W2=-0.58) e poi da 28, 16, 31, 29, 0. \u00c8 un rischio a priori legato al tipo di reparto o all'ospedale, che non generalizza e pu\u00f2 sottostimare la sepsi nei pazienti chirurgici.",
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0
+     ]
+    },
+    {
+     "id": "H4",
+     "title": "Effetti temporali: durata della degenza in terapia intensiva e tempo dal ricovero ospedaliero",
+     "description": "ICULOS_z aumenta il rischio (peso effettivo da +0.8 a +1.3; z=+2 d\u00e0 +1.6 di logit), tramite i neuroni 10, 16, 31 (spenti) e 19, 22 (accesi). Anche HospAdmTime_z negativo (ricovero in ospedale molto prima della terapia intensiva) aumenta il rischio (z=-2 d\u00e0 +0.8), tramite i neuroni 10, 7, 12. Sono correlati della prevalenza (le sepsi insorte in terapia intensiva compaiono pi\u00f9 tardi nella degenza) e non stati del paziente. Plausibili in parte, ma possono creare allarmi basati solo sul tempo.",
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "neurons": [
+      10,
+      16,
+      31,
+      19,
+      22,
+      7,
+      12
+     ]
+    },
+    {
+     "id": "H5",
+     "title": "La fisiologia della sepsi \u00e8 quasi ignorata (lattato, vitali, WBC)",
+     "description": "I valori fisiologici chiave hanno pesi effettivi piccoli: Lactate_last circa +0.07, HR circa +0.2, Temp circa +0.3, Resp circa +0.15, WBC circa +0.17, MAP circa -0.27. Un lattato a +3 DS non cambia il logit. Un profilo settico estremo (vitali a \u00b13 DS, piastrine basse, creatinina alta) in un paziente monitorato d\u00e0 logit -3.72 contro -3.69 della baseline. Nel neurone 15 il lattato alto addirittura spegne un neurone a W2 negativo, ma l'effetto \u00e8 compensato dai neuroni 28, 14 e 10. Il modello non riconosce un paziente settico se mancano i segnali di processo.",
+     "features": [
+      "Lactate_last_z",
+      "HR_last_z",
+      "Temp_last_z",
+      "Resp_last_z",
+      "WBC_last_z",
+      "MAP_last_z",
+      "SBP_last_z"
+     ],
+     "neurons": [
+      15,
+      28,
+      14,
+      10,
+      21,
+      7
+     ]
+    }
+   ],
+   "submitted": {
+    "decisions": [
+     {
+      "mechanism": "Leakage: blood_culture_ordered",
+      "decision": "remove",
+      "reason": "Ordinare un'emocoltura \u00e8 un'azione del clinico che segue il sospetto di sepsi: \u00e8 un'informazione che filtra dal futuro, non un segno del paziente. Nel modello originale valeva circa +3.8 di logit, pi\u00f9 di qualsiasi segno fisiologico, e la sua relazione con l'esito dipende dai protocolli locali. Ho azzerato la colonna. Visto che quasi sempre vale 0, la soglia dei neuroni non va spostata."
+     },
+     {
+      "mechanism": "Missingness informativa: conteggi delle misurazioni (Lactate, Bilirubin_total, AST, FiO2, Fibrinogen, Magnesium, HR, Platelets, Chloride, SBP, Creatinine _n_meas_6h)",
+      "decision": "remove",
+      "reason": "Quante volte si misura un parametro riflette i protocolli e il sospetto del clinico: per esempio il lattato ripetuto valeva circa +0.57 di logit per misura. Queste abitudini cambiano da un ospedale all'altro, quindi il segnale non si trasferisce ed \u00e8 in parte una forma di leakage. Ho azzerato le 11 colonne segnalate. Il loro contributo a un valore tipico l'ho spostato nel bias dei neuroni, cos\u00ec i neuroni restano nello stesso regime ReLU. I valori tipici non vengono da dati: li ho scelti io (HR 5.5, SBP 5, FiO2 1.5, esami di laboratorio 0.2-1)."
+     },
+     {
+      "mechanism": "Shortcut amministrativo: Unit_SICU / Unit_MICU",
+      "decision": "remove",
+      "reason": "Il tipo di reparto riflette il case-mix e l'organizzazione dell'ospedale di addestramento (SICU circa -1.5 di logit, MICU +0.4), non la fisiologia. In un altro ospedale la composizione dei reparti e il loro rischio di base possono essere diversi o invertiti. Ho azzerato le colonne e spostato nel bias il contributo di un valore medio stimato da me (0.4 per ciascuna), per non spostare i neuroni."
+     },
+     {
+      "mechanism": "Effetti temporali: ICULOS_z, HospAdmTime_z",
+      "decision": "attenuate",
+      "reason": "HospAdmTime dipende dai percorsi di ricovero del singolo ospedale ed \u00e8 un artefatto amministrativo, quindi l'ho rimosso. ICULOS invece ha anche una componente clinica vera (la sepsi acquisita in reparto compare dopo alcune ore di degenza), ma \u00e8 sensibile a come \u00e8 costruito il dataset e alla durata delle degenze nel nuovo ospedale. Per questo ne ho dimezzato il peso (da +0.87 a circa +0.43 di logit per deviazione standard) invece di toglierlo del tutto. Visto che la variabile \u00e8 standardizzata (media 0), non serve correggere il bias."
+     },
+     {
+      "mechanism": "Fisiologia della sepsi quasi ignorata (lattato, vitali, WBC)",
+      "decision": "keep",
+      "reason": "Questo non \u00e8 un meccanismo spurio ma il segnale causale vero, e i segni sono clinicamente coerenti: HR, temperatura, frequenza respiratoria, WBC e lattato aumentano il rischio, MAP e SBP bassi lo aumentano. Questi pesi non li ho toccati. Togliere le scorciatoie ne aumenta gi\u00e0 il peso relativo. Non li ho amplificati perch\u00e9 senza dati non avrei potuto verificare il guadagno."
+     }
+    ],
+    "changes": "Tutte le modifiche riguardano solo le colonne degli input in W1 e b1; W2 e b2 sono rimasti uguali. (1) blood_culture_ordered: colonna azzerata. (2) 11 conteggi _n_meas_6h segnalati: colonne azzerate, con b1 += W1[:,j]\u00b7valore_tipico. (3) Unit_MICU e Unit_SICU: colonne azzerate, con b1 += W1[:,j]\u00b70.4. (4) HospAdmTime_z: colonna azzerata. ICULOS_z: colonna moltiplicata per 0.5. Ho controllato con forward_pass (3 vettori su 30). Con emocoltura=1, SICU=1, 4 misure di lattato e HospAdmTime=+2 il logit resta identico al profilo di base (-6.55). Un profilo fisiologico settico alza il logit di circa +1.0.",
+    "expected_side_effects": "- **Prestazioni in casa:** nell'ospedale di addestramento AUROC e AUPRC apparenti scenderanno, soprattutto per la perdita dell'emocoltura, che era il predittore pi\u00f9 forte ma per leakage.\n- **Discriminazione complessiva pi\u00f9 debole:** quello che resta si basa sulla fisiologia, che il modello aveva imparato con pesi piccoli. I punteggi saranno pi\u00f9 compressi e la sensibilit\u00e0 ai casi precoci, prima dell'ordine di emocoltura, potrebbe restare modesta.\n- **Calibrazione:** i rischi assoluti restano bassi (logit tipico circa -6.5) e vanno ricalibrati sui dati locali del nuovo ospedale prima di fissare soglie di allarme.\n- **Neuroni costanti:** alcuni neuroni che codificavano quasi solo emocoltura o reparto ora danno un valore costante.\n- **Valori tipici non verificati:** quelli usati per spostare i conteggi nel bias sono stime mie e non vengono da dati. Se nel nuovo ospedale le frequenze di misura sono molto diverse cambia solo l'offset dei neuroni, non la dipendenza dai conteggi.\n- **ICULOS:** \u00e8 rimasto un effetto temporale residuo dimezzato, che potrebbe favorire un po' i pazienti con degenza lunga."
+   },
+   "forward_used": 3,
+   "n_turns": 8,
+   "usage": {
+    "input": 18,
+    "output": 7720,
+    "cache_read": 62498,
+    "cache_write": 15933
+   },
+   "model": "claude-opus-5-5",
+   "profile": {
+    "A_test": {
+     "auroc": 0.683322940832595,
+     "auprc": 0.0665945276491217,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6272743874157014,
+     "auprc": 0.04074117495918318,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.4592423028393012,
+     "ICULOS_abs_dlogit_to_median": 0.2027590494439985,
+     "ICULOS_slope_168h_minus_24h": 1.6786991444180508,
+     "HospAdmTime_abs_dlogit_to_median": 0.0,
+     "Unit_SICU_abs_dlogit_to_median": 0.0,
+     "physiology_last_abs_dlogit_to_median": 0.6528778241978416
+    }
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 0,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage: l'ordine di emocoltura domina la previsione",
+     "description": "blood_culture_ordered ha la colonna di W1 di gran lunga pi\u00f9 grande (norma 3.97) e un effetto lineare sommato di +6.05. Nelle prove sposta il logit da -5.62 a -1.51. Con un quadro SIRS il logit passa da -4.06 a -0.07 (probabilit\u00e0 48%). Agisce spegnendo i neuroni inibitori (28 e 8 i principali, con W2 di -0.81 e -0.71) e attivando i neuroni 4, 18, 27, 19 e 22. L'emocoltura riflette il sospetto clinico e fa parte della definizione dell'etichetta sepsi: \u00e8 un'informazione che arriva dall'etichetta, non un predittore fisiologico.",
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "neurons": [
+      28,
+      8,
+      5,
+      7,
+      11,
+      12,
+      14,
+      15,
+      20,
+      21,
+      23,
+      25,
+      29,
+      31,
+      4,
+      18,
+      27,
+      19,
+      22
+     ]
+    },
+    {
+     "id": "H3",
+     "title": "Il reparto SICU abbassa il rischio a parit\u00e0 di fisiologia",
+     "description": "Unit_SICU ha effetto lineare -1.42 e attiva i neuroni inibitori 10, 16, 29, 0, 31 e 23. Nelle prove abbassa il logit di 1.06 al basale e di 0.91 in un paziente con quadro SIRS. Unit_MICU alza il logit di 0.67. \u00c8 una scorciatoia basata sulla prevalenza nel reparto (e forse su pratiche di codifica), che si trasferisce male ad altri ospedali.",
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "neurons": [
+      10,
+      16,
+      29,
+      0,
+      31,
+      23
+     ]
+    },
+    {
+     "id": "H4",
+     "title": "Tempo di degenza (ICULOS) e tempo pre-terapia intensiva come scorciatoie temporali",
+     "description": "ICULOS_z ha effetto lineare +1.27 (neuroni 16, 10, 29, 31 e 20 spenti, neurone 19 attivato): +1.29 di logit per 2 deviazioni standard e -0.68 per -1 deviazione. HospAdmTime_z ha effetto -0.46 (neurone 10). Il modello impara che pi\u00f9 a lungo il paziente resta in terapia intensiva, pi\u00f9 \u00e8 alto il rischio. Questo riflette la costruzione della coorte e l'etichetta, pi\u00f9 che la fisiologia.",
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "neurons": [
+      16,
+      10,
+      29,
+      31,
+      20,
+      19
+     ]
+    }
+   ],
+   "submitted": {
+    "decisions": [
+     {
+      "mechanism": "Leakage: blood_culture_ordered (neuroni 28, 8, 5, 7, 11, 12, 14, 15, 20, 21, 23, 25, 29, 31, 4, 18, 27, 19, 22)",
+      "decision": "remove",
+      "reason": "L'ordine di emocoltura fa parte della definizione stessa dell'etichetta (sospetto di infezione) ed e' un atto clinico che precede/coincide con la diagnosi: non e' un predittore fisiologico ma una circolarita'. Nel modello originale spostava il logit di +3.8..+5.3 (da p=0.02 a p=0.52 a parita' di fisiologia), mentre un intero profilo settico (HR, Temp, Resp, MAP, lattato, WBC) spostava solo +0.4. Le pratiche di prescrizione (quando, a chi, con che frequenza si richiedono emocolture, e come viene registrato l'orario) variano fortemente tra ospedali, quindi in un ospedale mai visto questo canale e' inaffidabile e oscura il segnale fisiologico trasferibile. Poiche' la feature vale 0 nella quasi totalita' delle ore, azzerare la colonna non altera il comportamento di base dei neuroni."
+     },
+     {
+      "mechanism": "Reparto SICU/MICU abbassa/alza il rischio a parita' di fisiologia (neuroni 10, 16, 29, 0, 31, 23)",
+      "decision": "remove",
+      "reason": "L'effetto (SICU: -1.5 logit, MICU: +0.4 a parita' di fisiologia) codifica il case-mix e la prevalenza di sepsi per reparto dell'ospedale di addestramento; in un altro ospedale la composizione dei reparti, i criteri di assegnazione e le prevalenze sono diversi e l'effetto puo' persino invertirsi. Inoltre non ha significato clinico per il singolo paziente: un paziente chirurgico con la stessa fisiologia non ha meno sepsi. Ho rimosso il differenziale tra reparti ma ne ho conservato l'effetto medio (0.5*MICU + 0.5*SICU) nei bias nascosti, in modo da non spostare le attivazioni dei neuroni rispetto a quanto visto in addestramento."
+     },
+     {
+      "mechanism": "Scorciatoie temporali ICULOS_z e HospAdmTime_z (neuroni 16, 10, 29, 31, 20, 19)",
+      "decision": "attenuate",
+      "reason": "Il tempo di degenza in TI e il tempo pre-TI hanno una componente clinica plausibile (il rischio di sepsi nosocomiale cresce con la degenza, i trasferiti tardivamente dal reparto sono spesso piu' compromessi), ma gran parte dell'effetto originale (+0.83 logit per unita' di ICULOS_z, -0.59 per HospAdmTime_z, piu' di qualunque feature fisiologica) riflette artefatti di costruzione dei dati (troncamento delle serie, timing dell'etichetta) e la distribuzione dei tempi di degenza/trasferimento dell'ospedale sorgente; la standardizzazione stessa (media/deviazione) non e' garantita trasferibile. Ho ridotto le colonne al 30% per mantenere una piccola componente plausibile senza che domini la fisiologia."
+     }
+    ],
+    "changes": "W1[:, blood_culture_ordered] = 0 (rimozione completa della leakage). b1 += 0.5*W1[:,Unit_MICU] + 0.5*W1[:,Unit_SICU], poi W1[:,Unit_MICU] = W1[:,Unit_SICU] = 0 (effetto medio di reparto incorporato nel bias, differenziale eliminato). W1[:,ICULOS_z] *= 0.3 e W1[:,HospAdmTime_z] *= 0.3 (attenuazione). W2 e b2 invariati. Salvato in model_fixed.npz con le stesse forme.",
+    "expected_side_effects": "1) Nelle ore in cui viene richiesta un'emocoltura il modello non produce piu' un balzo di probabilita' (da ~0.02 a ~0.5): la sensibilita' misurata sui dati dell'ospedale di origine calera', perche' parte di quella 'performance' era circolare. In compenso il ranking e' ora guidato da laboratorio e vitali (PTT, lattato e frequenza di misura del lattato, bilirubina, BUN, creatinina, troponina, SaO2, temperatura, MAP). 2) La scala del logit e' compressa: la probabilita' di base scende a ~0.014 e un profilo settico severo arriva solo a ~0.045; la discriminazione (AUC) non ne risente, ma la calibrazione e le soglie di allarme vanno rideterminate nel nuovo ospedale. 3) I pazienti SICU ricevono punteggi piu' alti e quelli MICU piu' bassi rispetto a prima, a parita' di fisiologia; il bias medio incorporato e' una stima (mix 50/50) e potrebbe non corrispondere al mix reale, con effetto solo sulla calibrazione. 4) Il modello perde parte dell'informazione legata alla fase della degenza (rischio nelle ore avanzate e nei trasferiti tardivi), mantenuta al 30%. 5) Restano non toccati i segnali di 'intensita' di monitoraggio' (n_meas_6h), che sono anch'essi parzialmente dipendenti dalle pratiche locali e meriterebbero una verifica sui dati del nuovo ospedale."
+   },
+   "forward_used": 6,
+   "n_turns": 7,
+   "usage": {
+    "input": 16,
+    "output": 7904,
+    "cache_read": 61509,
+    "cache_write": 17265
+   },
+   "model": "claude-fable-5-1",
+   "profile": {
+    "A_test": {
+     "auroc": 0.7078227477119374,
+     "auprc": 0.06074431769809931,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6567558607622133,
+     "auprc": 0.0354157762592615,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.6208164881783398,
+     "ICULOS_abs_dlogit_to_median": 0.12482526851623009,
+     "ICULOS_slope_168h_minus_24h": 1.1200994165336473,
+     "HospAdmTime_abs_dlogit_to_median": 0.042491742099743615,
+     "Unit_SICU_abs_dlogit_to_median": 0.0,
+     "physiology_last_abs_dlogit_to_median": 0.6517460282500939
+    }
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 1,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage dall'ordine di emocoltura (blood_culture_ordered)",
+     "description": "La richiesta di emocoltura \u00e8 un'azione del clinico che segnala un sospetto di infezione gi\u00e0 presente. Nelle etichette tipo Sepsis-3/PhysioNet fa parte della definizione dell'evento (sospetta infezione = coltura + antibiotico). Il modello la usa come predittore principale (W2\u00b7W1 = +6.05; delta logit misurato da +3.8 a +4.1), molto pi\u00f9 di tutta la fisiologia insieme. La feature disattiva molti neuroni 'protettivi' con W2<0 (28: peso \u22121.5, 8, 15, 10, 5, 31, 23, 16, 21, 12, 14, 25, 29) e attiva i neuroni di rischio 4, 18, 27, 22 e 19. Il modello impara quindi a rilevare il sospetto del medico, non a prevedere la sepsi in anticipo.",
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "neurons": [
+      28,
+      8,
+      15,
+      10,
+      5,
+      31,
+      23,
+      16,
+      21,
+      12,
+      14,
+      25,
+      29,
+      20,
+      11,
+      7,
+      6,
+      0,
+      17,
+      4,
+      18,
+      27,
+      22,
+      19
+     ]
+    },
+    {
+     "id": "H2",
+     "title": "Il tempo di degenza in terapia intensiva (ICULOS_z) aumenta il rischio",
+     "description": "ICULOS_z ha un effetto netto positivo (W2\u00b7W1 = +1.27; +2 DS \u2192 +1.29 logit, \u22121 DS \u2192 \u22120.68). \u00c8 un artefatto noto del dataset PhysioNet 2019: i pazienti settici hanno degenze pi\u00f9 lunghe e le ore positive cadono pi\u00f9 avanti. Il modello usa l'orologio come proxy invece dello stato clinico. Passa dai neuroni 10, 16, 31, 29 e 0 (peso negativo su neuroni con W2<0) e 19, 22 (peso positivo su neuroni con W2>0).",
+     "features": [
+      "ICULOS_z"
+     ],
+     "neurons": [
+      10,
+      16,
+      19,
+      31,
+      22,
+      29,
+      0,
+      20
+     ]
+    },
+    {
+     "id": "H3",
+     "title": "Il tipo di terapia intensiva (SICU/MICU) fa da proxy della popolazione",
+     "description": "Unit_SICU riduce il rischio (W2\u00b7W1 = \u22121.42; misurato \u22121.06 logit e \u22120.8 anche in presenza di coltura). Unit_MICU lo aumenta (+0.67 logit). L'effetto passa soprattutto dal neurone 10 (peso SICU +0.76, W2 \u22120.58), poi da 28, 16, 31, 29, 0 e, per MICU, 8. Il modello sta imparando le prevalenze di sepsi per reparto (o per ospedale/sistema, nei dati PhysioNet), non lo stato del paziente: \u00e8 fragile in caso di cambio di reparto o di ospedale.",
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0,
+      23,
+      8
+     ]
+    },
+    {
+     "id": "H4",
+     "title": "L'intensit\u00e0 di misurazione dei laboratori fa da segnale di rischio (informative missingness)",
+     "description": "I conteggi di misure di laboratorio nelle ultime 6h pesano pi\u00f9 dei valori stessi. Lactate_n_meas_6h=3 d\u00e0 +1.34 logit e =6 d\u00e0 +2.2, mentre un lattato a +3 DS d\u00e0 solo +0.50. Pesano anche Bilirubin_total_n_meas_6h, AST_n_meas_6h, BaseExcess_n_meas_6h e Fibrinogen_n_meas_6h. Un pannello di laboratorio completo (n_meas=1) d\u00e0 +0.79. Il canale \u00e8 soprattutto il neurone 15, pi\u00f9 14, 7, 16 e 8: pesi negativi su neuroni con W2<0. Il modello impara che i medici misurano di pi\u00f9 chi sospettano malato, cio\u00e8 di nuovo un segnale di processo assistenziale. Con l'imputazione a 'normale' dei valori mai misurati, questo \u00e8 l'unico canale che porta l'informazione sull'assenza di misure.",
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "BaseExcess_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Lactate_n_meas_6h",
+      "HCO3_n_meas_6h",
+      "pH_n_meas_6h",
+      "PaCO2_n_meas_6h",
+      "SaO2_n_meas_6h",
+      "BUN_n_meas_6h",
+      "Alkalinephos_n_meas_6h",
+      "Calcium_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "Creatinine_n_meas_6h",
+      "Bilirubin_direct_n_meas_6h",
+      "Glucose_n_meas_6h",
+      "Magnesium_n_meas_6h",
+      "Phosphate_n_meas_6h",
+      "Potassium_n_meas_6h",
+      "TroponinI_n_meas_6h",
+      "Hct_n_meas_6h",
+      "Hgb_n_meas_6h",
+      "PTT_n_meas_6h",
+      "WBC_n_meas_6h",
+      "Platelets_n_meas_6h",
+      "FiO2_n_meas_6h"
+     ],
+     "neurons": [
+      15,
+      14,
+      7,
+      16,
+      8,
+      29,
+      20,
+      30
+     ]
+    },
+    {
+     "id": "H5",
+     "title": "Una lunga degenza ospedaliera prima della terapia intensiva aumenta il rischio",
+     "description": "HospAdmTime_z ha un effetto netto negativo (W2\u00b7W1 = \u22120.46): pi\u00f9 \u00e8 negativo (pi\u00f9 ore in ospedale prima del trasferimento), pi\u00f9 sale il rischio (\u22122 DS \u2192 +0.58 logit). Passa soprattutto dal neurone 10 (peso +0.58), che mescola anche SICU, ICULOS, PTT, BUN, creatinina e troponina. Ha una parziale plausibilit\u00e0 clinica (infezioni nosocomiali, peggioramento in reparto), ma resta una variabile amministrativa e di percorso, sensibile a come il sito registra i dati.",
+     "features": [
+      "HospAdmTime_z"
+     ],
+     "neurons": [
+      10,
+      7,
+      12,
+      26
+     ]
+    }
+   ],
+   "submitted": {
+    "decisions": [
+     {
+      "mechanism": "Leakage dall'ordine di emocoltura (blood_culture_ordered)",
+      "decision": "remove",
+      "reason": "L'ordine di emocoltura e' parte della definizione stessa dell'esito (sospetto di infezione in Sepsis-3): e' leakage dell'etichetta, non un predittore. Nel modello originale da solo sposta il logit di +3.8 (2% -> 52%), piu' di un intero quadro fisiologico settico (+0.8). Le pratiche di richiesta delle colture (es. colture di sorveglianza di routine) variano fra ospedali, quindi il meccanismo non e' trasferibile e in uso reale il modello 'prevederebbe' la sepsi solo dopo che il clinico l'ha gia' sospettata. Colonna di W1 azzerata."
+     },
+     {
+      "mechanism": "ICULOS_z aumenta il rischio",
+      "decision": "attenuate",
+      "reason": "L'aumento dell'incidenza oraria con la durata della degenza e' in gran parte un artefatto di costruzione del dataset (i pazienti non settici vengono troncati prima, i settici hanno record piu' lunghi) ed e' legato alla distribuzione delle degenze dell'ospedale di addestramento (la standardizzazione stessa e' ospedale-specifica). Esiste pero' una componente reale (rischio di infezione nosocomiale cresce col tempo in ICU), quindi non l'ho rimosso del tutto: colonna scalata a 0.3 (effetto a +2 SD da +1.56 a +0.57 logit)."
+     },
+     {
+      "mechanism": "Unit_SICU/Unit_MICU come proxy della popolazione",
+      "decision": "remove",
+      "reason": "Un effetto di -1.4 logit per il solo fatto di essere in SICU riflette il case-mix dell'ospedale di addestramento, non il paziente. Nell'altro ospedale i reparti possono avere case-mix, protocolli e persino etichettatura diversi, quindi il proxy e' inaffidabile e rischia di de-prioritizzare sistematicamente un intero reparto. Colonne azzerate; per non alterare il gating ReLU dei neuroni nascosti ho aggiunto a b1 il contributo medio atteso (0.4*W_MICU + 0.4*W_SICU), cosi' il modello lavora attorno a una popolazione 'media' invece che alla categoria 'reparto sconosciuto'."
+     },
+     {
+      "mechanism": "Intensita' di misurazione dei laboratori (informative missingness)",
+      "decision": "attenuate",
+      "reason": "Il fatto che vengano richiesti lattato, bilirubina, emogas ecc. riflette il sospetto clinico ed e' un segnale parzialmente reale e diffuso fra ospedali, ma la sua intensita' dipende fortemente dai protocolli locali (pannelli di routine, frequenza degli emogas) che non conosciamo. Ho dimezzato (x0.5) tutte le 26 colonne *_n_meas_6h dei laboratori indicati, mantenendo invariati i valori di laboratorio stessi, che sono il segnale clinicamente fondato."
+     },
+     {
+      "mechanism": "HospAdmTime_z: lunga degenza ospedaliera pre-ICU aumenta il rischio",
+      "decision": "attenuate",
+      "reason": "Un lungo soggiorno in reparto prima dell'ICU e' un fattore di rischio plausibile e causale per infezione nosocomiale, quindi il meccanismo e' in buona parte trasferibile. Tuttavia la scala standardizzata e la distribuzione dei percorsi (PS/sala operatoria vs reparto) sono ospedale-specifiche e l'effetto e' correlato col tipo di reparto che ho rimosso. Attenuazione lieve (x0.7) come compromesso."
+     }
+    ],
+    "changes": "Solo W1 e b1 modificati; W2 e b2 invariati. W1[:,blood_culture_ordered]=0; W1[:,ICULOS_z]*=0.3; W1[:,Unit_MICU]=W1[:,Unit_SICU]=0 con b1 += 0.4*W1_orig[:,Unit_MICU] + 0.4*W1_orig[:,Unit_SICU] (compensazione verso popolazione media); W1[:,<26 lab>_n_meas_6h]*=0.5; W1[:,HospAdmTime_z]*=0.7. Salvato in model_fixed.npz con stesse forme.",
+    "expected_side_effects": "(1) Calibrazione: le probabilita' assolute sono piu' basse (logit basale da -3.69 a -4.13; un quadro settico passa da 5.3% a 4.6%) e il range dinamico e' piu' compresso perche' il modello non puo' piu' 'sparare' sulle ore con emocoltura; nel nuovo ospedale servira' una ricalibrazione della soglia (es. su percentili) prima dell'uso. (2) Nell'ospedale di addestramento l'AUC misurata probabilmente scende, perche' li' il leakage da emocoltura era genuinamente predittivo dell'etichetta; e' un costo accettato per avere un modello che discrimina sulla fisiologia (HR, Temp, WBC, lattato, MAP, creatinina, PTT, bilirubina conservano i loro pesi: la verifica mostra settico -3.04 > basale -4.13 > fisiologia normale -4.59). (3) Perdita di una parte del segnale 'sospetto clinico' veicolato dall'intensita' dei prelievi, e di una parte del segnale temporale reale (nosocomiale) di ICULOS. (4) I pazienti SICU non sono piu' sistematicamente declassati: se nel nuovo ospedale i chirurgici avessero davvero rischio basso, ci sara' qualche falso positivo in piu' in quel reparto. (5) Nessun effetto sulle ore senza emocoltura e con reparto 'altro' oltre allo shift costante del bias."
+   },
+   "forward_used": 16,
+   "n_turns": 8,
+   "usage": {
+    "input": 18,
+    "output": 8590,
+    "cache_read": 68385,
+    "cache_write": 18569
+   },
+   "model": "claude-fable-5-1",
+   "profile": {
+    "A_test": {
+     "auroc": 0.7044216279367089,
+     "auprc": 0.05991328911387753,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6434373039238586,
+     "auprc": 0.034014849848097085,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.48990052021064184,
+     "ICULOS_abs_dlogit_to_median": 0.12675489932869427,
+     "ICULOS_slope_168h_minus_24h": 1.1361314661901556,
+     "HospAdmTime_abs_dlogit_to_median": 0.0958699329548077,
+     "Unit_SICU_abs_dlogit_to_median": 0.0,
+     "physiology_last_abs_dlogit_to_median": 0.6480442355789329
+    }
+   }
+  },
+  {
+   "cond": "B30",
+   "rep": 2,
+   "hypotheses": [
+    {
+     "id": "H1",
+     "title": "Leakage: l'ordine di emocoltura domina la previsione",
+     "description": "blood_culture_ordered ha il peso effettivo pi\u00f9 alto (circa +5.3 sul logit tramite i neuroni attivi). Ha pesi in ingresso fortemente negativi su circa 18 neuroni attivi a riposo con W2<0 (soprattutto 28: W1=-1.50, W2=-0.81; poi 8, 15, 5, 10, 23, 31) e positivi sui neuroni 4, 18, 27, 22, 19 (W2>0). Nei forward pass sposta il logit di +3.8/+4.1 in qualunque contesto, mentre una fisiologia settica estrema non lo sposta. L'emocoltura fa parte della definizione dell'etichetta (sospetto di infezione) e riflette una decisione del clinico: \u00e8 leakage, o almeno uno shortcut, e il modello segnala la sepsi solo dopo che \u00e8 gi\u00e0 stata sospettata.",
+     "features": [
+      "blood_culture_ordered"
+     ],
+     "neurons": [
+      28,
+      8,
+      15,
+      5,
+      10,
+      23,
+      31,
+      21,
+      16,
+      14,
+      20,
+      12,
+      11,
+      7,
+      0,
+      4,
+      18,
+      27,
+      22,
+      19
+     ]
+    },
+    {
+     "id": "H2",
+     "title": "Missingness informativa: i conteggi di misurazioni fanno da proxy del comportamento clinico",
+     "description": "Le feature *_n_meas_6h hanno effetti ampi e non fisiologici. Lactate_n_meas_6h ha un peso effettivo di circa +0.56 per misura (3 misure: +1.2 di logit, mentre il valore del lattato a +3 DS non ha effetto), tramite i neuroni 15, 7, 14, 16. Anche Bilirubin_total, AST, FiO2 e Fibrinogen_n_meas aumentano il rischio. I conteggi dei vitali (HR, SBP, Chloride, Platelets_n_meas) lo riducono: HR misurata ogni ora porta il logit da -3.69 a -5.71. L'effetto \u00e8 diffuso su molti neuroni (8, 15, 31, 23, 16, 5). Il modello apprende cio\u00e8 la frequenza degli ordini (il lattato si dosa quando si sospetta la sepsi) e la densit\u00e0 del monitoraggio, non i valori.",
+     "features": [
+      "Lactate_n_meas_6h",
+      "Bilirubin_total_n_meas_6h",
+      "AST_n_meas_6h",
+      "FiO2_n_meas_6h",
+      "Fibrinogen_n_meas_6h",
+      "Magnesium_n_meas_6h",
+      "HR_n_meas_6h",
+      "Platelets_n_meas_6h",
+      "Chloride_n_meas_6h",
+      "SBP_n_meas_6h",
+      "Creatinine_n_meas_6h"
+     ],
+     "neurons": [
+      15,
+      7,
+      14,
+      16,
+      30,
+      8,
+      31,
+      23,
+      5,
+      19
+     ]
+    },
+    {
+     "id": "H3",
+     "title": "Shortcut amministrativo: l'unit\u00e0 di terapia intensiva (SICU/MICU)",
+     "description": "Unit_SICU ha un peso effettivo di circa -1.5 (forward pass: -1.5 rispetto alla baseline, -1.7 in un paziente monitorato rispetto a MICU che alza il rischio di circa +0.4/+0.7). Passa soprattutto dal neurone 10 (W1=+0.76, W2=-0.58) e poi da 28, 16, 31, 29, 0. \u00c8 un rischio a priori legato al tipo di reparto o all'ospedale, che non generalizza e pu\u00f2 sottostimare la sepsi nei pazienti chirurgici.",
+     "features": [
+      "Unit_SICU",
+      "Unit_MICU"
+     ],
+     "neurons": [
+      10,
+      28,
+      16,
+      31,
+      29,
+      0
+     ]
+    },
+    {
+     "id": "H4",
+     "title": "Effetti temporali: durata della degenza in terapia intensiva e tempo dal ricovero ospedaliero",
+     "description": "ICULOS_z aumenta il rischio (peso effettivo da +0.8 a +1.3; z=+2 d\u00e0 +1.6 di logit), tramite i neuroni 10, 16, 31 (spenti) e 19, 22 (accesi). Anche HospAdmTime_z negativo (ricovero in ospedale molto prima della terapia intensiva) aumenta il rischio (z=-2 d\u00e0 +0.8), tramite i neuroni 10, 7, 12. Sono correlati della prevalenza (le sepsi insorte in terapia intensiva compaiono pi\u00f9 tardi nella degenza) e non stati del paziente. Plausibili in parte, ma possono creare allarmi basati solo sul tempo.",
+     "features": [
+      "ICULOS_z",
+      "HospAdmTime_z"
+     ],
+     "neurons": [
+      10,
+      16,
+      31,
+      19,
+      22,
+      7,
+      12
+     ]
+    },
+    {
+     "id": "H5",
+     "title": "La fisiologia della sepsi \u00e8 quasi ignorata (lattato, vitali, WBC)",
+     "description": "I valori fisiologici chiave hanno pesi effettivi piccoli: Lactate_last circa +0.07, HR circa +0.2, Temp circa +0.3, Resp circa +0.15, WBC circa +0.17, MAP circa -0.27. Un lattato a +3 DS non cambia il logit. Un profilo settico estremo (vitali a \u00b13 DS, piastrine basse, creatinina alta) in un paziente monitorato d\u00e0 logit -3.72 contro -3.69 della baseline. Nel neurone 15 il lattato alto addirittura spegne un neurone a W2 negativo, ma l'effetto \u00e8 compensato dai neuroni 28, 14 e 10. Il modello non riconosce un paziente settico se mancano i segnali di processo.",
+     "features": [
+      "Lactate_last_z",
+      "HR_last_z",
+      "Temp_last_z",
+      "Resp_last_z",
+      "WBC_last_z",
+      "MAP_last_z",
+      "SBP_last_z"
+     ],
+     "neurons": [
+      15,
+      28,
+      14,
+      10,
+      21,
+      7
+     ]
+    }
+   ],
+   "submitted": {
+    "decisions": [
+     {
+      "mechanism": "Leakage: blood_culture_ordered (neuroni 28,8,15,5,10,23,31,21,16,14,20,12,11,7,0,4,18,27,22,19)",
+      "decision": "remove",
+      "reason": "La richiesta di emocoltura \u00e8 una conseguenza del sospetto clinico di sepsi (coincide con la definizione stessa dell'etichetta), non un predittore: da sola spostava il logit di ~+4 (da p\u22480.006 a p\u22480.5). In un altro ospedale la tempistica/politica di richiesta delle emocolture \u00e8 diversa e il meccanismo non \u00e8 trasferibile n\u00e9 clinicamente utile per l'allerta precoce. Azzerata l'intera colonna 74 di W1: il modello si comporta ora, per tutti, come gi\u00e0 faceva nelle ore senza emocoltura."
+     },
+     {
+      "mechanism": "Missingness informativa: *_n_meas_6h (neuroni 15,7,14,16,30,8,31,23,5,19)",
+      "decision": "attenuate",
+      "reason": "La frequenza di misurazione riflette protocolli infermieristici/di laboratorio specifici dell'ospedale (es. HR_n=0 vs 6 valeva +1.3 logit; Lactate_n=2 +0.8). Non l'ho rimossa del tutto perch\u00e9 un lattato o una bilirubina richiesti conservano un segnale clinico (sospetto, gravit\u00e0) anche altrove. Ogni conteggio x \u00e8 stato sostituito da mu + alpha*(x-mu): alpha=0.3 per le 11 feature segnalate dall'audit, 0.6 per le altre; mu \u00e8 un valore tipico (\u22485.4 per i vitali orari, \u22482 Temp, 0.05-0.6 per i laboratori) ripiegato in b1 cos\u00ec da non spostare i punti operativi dei neuroni."
+     },
+     {
+      "mechanism": "Shortcut amministrativo: Unit_SICU / Unit_MICU (neuroni 10,28,16,31,29,0)",
+      "decision": "remove",
+      "reason": "SICU valeva -1.1 logit e MICU +0.7: codifica il case-mix e le politiche dell'ospedale di addestramento, non la fisiologia del paziente. Nell'altro ospedale la composizione e la codifica delle unit\u00e0 sono ignote e il rapporto unit\u00e0\u2192sepsi pu\u00f2 essere diverso o invertito. Colonne 70-71 azzerate (equivale al caso 'unit\u00e0 non nota', gi\u00e0 presente in addestramento)."
+     },
+     {
+      "mechanism": "Effetti temporali: ICULOS_z, HospAdmTime_z (neuroni 10,16,31,19,22,7,12)",
+      "decision": "attenuate",
+      "reason": "ICULOS era il secondo driver (+1.1 logit per +2 SD): in parte \u00e8 un artefatto della costruzione del dataset (censura, prevalenza crescente con la durata), in parte riflette un rischio reale di sepsi acquisita in TI; HospAdmTime analogo per la degenza pre-TI. Inoltre la standardizzazione con le statistiche dell'ospedale di origine pu\u00f2 non valere altrove. Pesi delle due colonne dimezzati (0.5): si conserva una parte del segnale trasferibile riducendo l'esposizione allo shift."
+     },
+     {
+      "mechanism": "Fisiologia quasi ignorata: lattato, HR, Temp, Resp, WBC, MAP, SBP (neuroni 15,28,14,10,21,7)",
+      "decision": "keep",
+      "reason": "I pesi fisiologici esistenti sono stati mantenuti (nessuna rimozione), ma dato che un profilo settico conclamato spostava il logit di appena +1 (lattato +2SD: +0.3) ho rinforzato il meccanismo: cinque neuroni di fatto morti (1, 9, 13, 19, 26: contributo quasi nullo, bias negativi) sono stati riassegnati a unit\u00e0 con prior clinico (SIRS/qSOFA): un'unit\u00e0 lineare sempre attiva (HR +0.3, Resp +0.3, Lattato +0.4, MAP -0.2, SBP -0.1 per SD) e quattro unit\u00e0 ReLU per febbre, ipotermia, leucocitosi e leucopenia. Sono i segnali pi\u00f9 trasferibili fra ospedali."
+     }
+    ],
+    "changes": "W1: colonna blood_culture_ordered azzerata; colonne Unit_MICU/Unit_SICU azzerate; colonne *_n_meas_6h scalate (0.3 per le 11 feature segnalate, 0.6 le altre) con il valore tipico mu ripiegato in b1 (b1 += W1[:,c]*(1-alpha)*mu); colonne ICULOS_z e HospAdmTime_z scalate 0.5. Neuroni 1, 9, 13, 19, 26 riscritti (riga di W1, b1, W2): n9 = unit\u00e0 lineare (b1=4, W2=1, b2 ridotto di 4 per compensare) con HR +0.3, Resp +0.3, Lactate +0.4, MAP -0.2, SBP -0.1; n1 = relu(Temp_z-1)*0.45; n13 = relu(-Temp_z-1)*0.8; n19 = relu(WBC_z-1)*0.35; n26 = relu(-WBC_z-1.5)*0.7. b2 riallineato in modo che il logit medio su una popolazione sintetica coincida con quello del modello originale (solo calibrazione). Forme invariate: W1 (32,75), b1 (32,), W2 (32,), b2 scalare.",
+    "expected_side_effects": "Sull'ospedale di addestramento le prestazioni apparenti (AUC) probabilmente calano, perch\u00e9 il modello non pu\u00f2 pi\u00f9 sfruttare l'emocoltura (leakage) e il case-mix delle unit\u00e0. La scala dei logit \u00e8 un po' pi\u00f9 compressa (std ~1.45 vs 1.74) e la calibrazione nel nuovo ospedale non \u00e8 garantita: il valore di b2 e i valori tipici mu dei conteggi sono stime, quindi la soglia operativa andr\u00e0 ricalibrata localmente (la discriminazione non ne risente). Le ore con emocoltura appena richiesta ora non ricevono alcun boost: il modello segnala in base a fisiologia, laboratorio e (attenuati) pattern di monitoraggio, quindi alcuni allarmi 'facili' arriveranno pi\u00f9 tardi o mancheranno. I pesi del prior fisiologico sono scelti a mano in unit\u00e0 z: se la standardizzazione del nuovo ospedale differisce molto, le loro grandezze potranno essere sotto/sovrastimate; correlazione tra logit vecchi e nuovi su popolazione sintetica \u22480.71, quindi il ranking cambia sensibilmente ma in direzione clinicamente coerente (profilo settico: +3.9 logit vs +1.0 originale; ipotermia/leucopenia non abbassano pi\u00f9 il rischio)."
+   },
+   "forward_used": 7,
+   "n_turns": 12,
+   "usage": {
+    "input": 26,
+    "output": 18979,
+    "cache_read": 212793,
+    "cache_write": 33435
+   },
+   "model": "claude-fable-5-1",
+   "profile": {
+    "A_test": {
+     "auroc": 0.7131469149544402,
+     "auprc": 0.056575883288898385,
+     "prevalence": 0.021868597533817747
+    },
+    "B_test": {
+     "auroc": 0.6956495960156173,
+     "auprc": 0.048882601555188886,
+     "prevalence": 0.014147074455869133
+    },
+    "dep": {
+     "bc_paired_do1_minus_do0": 0.0,
+     "counts_abs_dlogit_to_median": 0.26504809239942134,
+     "ICULOS_abs_dlogit_to_median": 0.2007276230563008,
+     "ICULOS_slope_168h_minus_24h": 1.6567190470071775,
+     "HospAdmTime_abs_dlogit_to_median": 0.0670924084658913,
+     "Unit_SICU_abs_dlogit_to_median": 0.0,
+     "physiology_last_abs_dlogit_to_median": 1.0137611716549948
+    }
+   }
+  }
+ ]
+}

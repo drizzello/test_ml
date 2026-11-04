@@ -13,6 +13,7 @@ uv run python phase3_counterfactual.py    # fase 3: test controfattuali
 uv run python phase4_audit.py             # fase 4: audit di Claude sui pesi (9 run, serve la chiave API)
 uv run python phase5_verify.py            # fase 5: verifica delle ipotesi
 uv run python phase6_correction.py        # fase 6: correzione dei pesi da parte di Claude (serve la chiave API)
+uv run python phase6b_choice.py           # fase 6b: correzione "a scelta", Opus 5.5 contro Fable 5.1 (serve la chiave API)
 uv run python phase7_shap.py              # fase 7: SHAP e confronto
 ```
 
@@ -475,6 +476,66 @@ le due cose richiede di sapere come generalizzano, quindi dati esterni, che l'LL
 
 ---
 
+## Fase 6b: correzione "a scelta", Opus 5.5 contro Fable 5.1
+
+Motivazione. Nella fase 6 il prompt chiedeva di eliminare **tutte** le dipendenze confermate, e l'LLM
+l'ha fatto alla lettera. Qui l'obiettivo è quello reale: "il modello verrà usato in un altro ospedale,
+mai visto; modifica i pesi perché discrimini il meglio possibile lì; per ogni meccanismo decidi se
+rimuoverlo, attenuarlo o tenerlo". Al modello non viene detto nulla su come è fatto l'altro ospedale.
+
+Condizioni uguali per i due modelli (`phase6b_choice.py`):
+- stesse 3 liste di ipotesi confermate (run B30 rep0-2) e stessa sandbox;
+- 30 forward pass, effort `high`;
+- `claude-opus-5-5` contro `claude-fable-5-1`.
+
+Costo: 0,67 $ (Opus) e 2,98 $ (Fable).
+
+| modello | lista | A AUROC | B AUROC | B AUPRC | bc | reparto | ICULOS | HospAdmTime | conteggi |
+|---|---|---|---|---|---|---|---|---|---|
+| originale | — | 0.9076 | 0.6627 | 0.0288 | | | | | |
+| solo colonna bc azzerata (riferimento) | — | 0.7628 | **0.6888** | **0.0488** | rimossa | tenuto | tenuto | tenuto | tenuti |
+| fase 6 ("togli tutto"), Opus | rep0-2 | 0.61-0.66 | 0.55-0.59 | 0.020-0.023 | rimossa | rimosso | rimosso | rimosso | rimossi in parte |
+| Opus 5.5 | rep0 | 0.7161 | 0.6689 | 0.0432 | rimossa | rimosso | dimezzato | rimosso | (non in lista) |
+| Opus 5.5 | rep1 | 0.7024 | 0.6456 | 0.0390 | rimossa | rimosso | attenuato | tenuto | 26 rimossi |
+| Opus 5.5 | rep2 | 0.6833 | 0.6273 | 0.0407 | rimossa | rimosso | dimezzato | rimosso | 11 rimossi |
+| Fable 5.1 | rep0 | 0.7078 | 0.6568 | 0.0354 | rimossa | rimosso | ×0,3 | ×0,3 | (non in lista) |
+| Fable 5.1 | rep1 | 0.7044 | 0.6434 | 0.0340 | rimossa | rimosso | ×0,3 | ×0,7 | 26 ×0,5 |
+| Fable 5.1 | rep2 | 0.7131 | **0.6956** | **0.0489** | rimossa | rimosso | ×0,5 | ×0,5 | tutti ×0,3-0,6 + **5 neuroni riscritti** |
+
+Medie su B (AUROC): Opus 0,647; Fable 0,665. Originale 0,663; solo bc rimossa 0,689. Tabella completa e
+motivazioni di ogni decisione in `results/phase6b.md`; pesi in `models/llm_fixed_choice_*.npz`.
+
+Cosa si vede:
+1. **Il prompt conta più del modello.** Passare da "togli tutto" a "decidi tu" porta B da 0,55-0,59 a
+   0,63-0,70 con entrambi i modelli. Nessuno dei due toglie più ICULOS del tutto: lo attenuano.
+2. **Nessuno dei due modelli separa davvero le scorciatoie.**
+   - Entrambi rimuovono sempre emocoltura e reparto, e attenuano sempre il tempo.
+   - Quasi sempre rimuovono o attenuano anche i conteggi.
+   - Nessun run fa la scelta che la fase 5 indica come migliore per B, cioè togliere solo
+     l'emocoltura (ed eventualmente il reparto) e tenere tutto il resto.
+   - In 5 run su 6 il risultato su B resta sotto il riferimento "solo bc rimossa".
+   - Le motivazioni sono ragionevoli ("le abitudini di prescrizione cambiano tra ospedali"), ma senza
+     dati dell'altro ospedale non possono sapere che tempo e conteggi lì reggono.
+3. **Fable non è meglio di Opus nelle scelte:** le decisioni sono quasi identiche. In media su B Fable
+   è un po' sopra (0,665 contro 0,647), ma con 3 run per modello la differenza sta nel rumore. Fable
+   attenua dove Opus rimuove (conteggi, HospAdmTime).
+4. **Un run di Fable (rep2) ha fatto "weight-space programming" vero.** Ha riscritto a mano 5 neuroni
+   come regole fisiologiche: un'unità lineare con FC, frequenza respiratoria, lattato e pressione;
+   febbre; ipotermia; leucocitosi; leucopenia. Ha poi ricalibrato b2 su una popolazione sintetica.
+   - È l'unico risultato sopra il riferimento: B 0,696, AUPRC 0,049.
+   - Scomposizione: senza quei 5 neuroni il suo modello fa 0,665 su B. I 5 neuroni da soli, scritti
+     senza vedere un solo paziente, fanno **0,669 su B** e 0,645 su A.
+   - Nel modello originale quei 5 neuroni contavano poco: spegnerli porta B da 0,663 a 0,659.
+   - È un singolo run, quindi non si può dire quanto sia ripetibile. È però la prima evidenza, in
+     questo progetto, che l'LLM può **aggiungere** conoscenza clinica ai pesi, non solo toglierla.
+
+Aggiornamento della risposta alla domanda centrale: con un obiettivo posto bene, le correzioni
+ragionate non distruggono più il modello. Su B però restano in media sotto il semplice "togli solo
+la scorciatoia inserita", perché nessuno dei due LLM sa quali scorciatoie si trasferiscono. L'unico
+miglioramento netto viene dall'aver scritto fisiologia nei pesi, non dalla scelta delle scorciatoie.
+
+---
+
 ## Fase 7: confronto con SHAP
 
 Metodo (`phase7_shap.py`): `shap.DeepExplainer` sul modello `with_bc` seed 0 (uscita: logit),
@@ -521,6 +582,9 @@ Cosa trova SHAP e cosa no, rispetto all'LLM:
 2. **Trova anche le scorciatoie naturali** (ICULOS, conteggi, reparto), ma non le distingue da quella
    inserita: le chiama tutte sospette con confidenze simili. La correzione che ne segue peggiora B,
    perché quelle scorciatoie esistono anche nell'altro ospedale.
+   Con un obiettivo posto bene (fase 6b) il danno sparisce quasi del tutto, ma né Opus 5.5 né
+   Fable 5.1 separano le scorciatoie meglio di così. L'unico miglioramento netto su B (0,696) viene da
+   un run di Fable che ha scritto a mano regole fisiologiche in 5 neuroni.
 3. **I forward pass non servono** su questo modello: la condizione A è la migliore.
 4. **SHAP, con i nomi delle feature davanti, arriva alle stesse conclusioni.** Il vantaggio dell'LLM
    è non avere bisogno di dati e proporre e motivare interventi, non vedere qualcosa che SHAP non vede.

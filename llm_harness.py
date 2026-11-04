@@ -107,15 +107,15 @@ def forward_tool(budget):
     }
 
 
-def run_agent(client, system, user_msg, tools, handlers, submit_name, log_path, max_turns=MAX_TURNS):
+def run_agent(client, system, user_msg, tools, handlers, submit_name, log_path, max_turns=MAX_TURNS, model=MODEL_ID):
     """Loop manuale. handlers: {tool_name: fn(input) -> (str_result, is_error)}.
     Termina quando l'LLM chiama submit_name con input valido. Salva il transcript in log_path."""
     messages = [{"role": "user", "content": user_msg}]
-    log = {"model": MODEL_ID, "effort": EFFORT, "system": system, "user": user_msg, "tools": tools,
+    log = {"model": model, "effort": EFFORT, "system": system, "user": user_msg, "tools": tools,
            "turns": [], "usage": {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}}
     submitted, nudged = None, False
     for turn in range(max_turns):
-        with client.messages.stream(model=MODEL_ID, max_tokens=64000, system=system, tools=tools,
+        with client.messages.stream(model=model, max_tokens=64000, system=system, tools=tools,
                                     messages=messages, thinking={"type": "adaptive"},
                                     output_config={"effort": EFFORT},
                                     cache_control={"type": "ephemeral"}) as stream:

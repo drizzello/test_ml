@@ -1,0 +1,428 @@
+{
+ "model": "claude-fable-5-1",
+ "effort": "high",
+ "system": "Sei un revisore di modelli clinici. Lavori sui pesi di una piccola rete neurale, senza dati di pazienti e senza poterla riaddestrare.\n\nIl modello: MLP con 75 input -> 32 neuroni nascosti (ReLU) -> 1 uscita (logit; probabilita' = sigmoide).\nlogit = W2 . relu(W1 x + b1) + b2. W1 ha forma (32, 75), b1 (32,), W2 (32,), b2 scalare.\nIl compito del modello: per ogni ora di degenza in terapia intensiva, prevede la sepsi nelle prossime 6 ore.\nGli input sono descritti in features.json (stesso ordine delle colonne di W1).\n\nPuoi valutare il modello (originale o modificato) solo con il tool forward_pass, con un budget totale di 30 vettori di input. Il tool usa sempre i pesi che si trovano in quel momento in model_fixed.npz se esiste, altrimenti in model.npz.\n\nLavora con il tool python. Salva i pesi corretti in model_fixed.npz (chiavi W1, b1, W2, b2, stesse forme), poi chiama submit_fix una sola volta.",
+ "user": "Il modello e' stato addestrato con i dati di un ospedale. Verra' usato in un altro ospedale, i cui dati non sono stati visti ne' in addestramento ne' in questo audit.\n\nUn audit precedente ha individuato in questo modello i seguenti meccanismi clinicamente sospetti, e una verifica sui dati dell'ospedale di addestramento ha confermato che il modello li usa:\n- Leakage: l'ordine di emocoltura domina la previsione: feature ['blood_culture_ordered']; neuroni [28, 8, 15, 5, 10, 23, 31, 21, 16, 14, 20, 12, 11, 7, 0, 4, 18, 27, 22, 19]\n- Missingness informativa: i conteggi di misurazioni fanno da proxy del comportamento clinico: feature ['Lactate_n_meas_6h', 'Bilirubin_total_n_meas_6h', 'AST_n_meas_6h', 'FiO2_n_meas_6h', 'Fibrinogen_n_meas_6h', 'Magnesium_n_meas_6h', 'HR_n_meas_6h', 'Platelets_n_meas_6h', 'Chloride_n_meas_6h', 'SBP_n_meas_6h', 'Creatinine_n_meas_6h']; neuroni [15, 7, 14, 16, 30, 8, 31, 23, 5, 19]\n- Shortcut amministrativo: l'unità di terapia intensiva (SICU/MICU): feature ['Unit_SICU', 'Unit_MICU']; neuroni [10, 28, 16, 31, 29, 0]\n- Effetti temporali: durata della degenza in terapia intensiva e tempo dal ricovero ospedaliero: feature ['ICULOS_z', 'HospAdmTime_z']; neuroni [10, 16, 31, 19, 22, 7, 12]\n- La fisiologia della sepsi è quasi ignorata (lattato, vitali, WBC): feature ['Lactate_last_z', 'HR_last_z', 'Temp_last_z', 'Resp_last_z', 'WBC_last_z', 'MAP_last_z', 'SBP_last_z']; neuroni [15, 28, 14, 10, 21, 7]\n\nObiettivo: modifica i pesi in modo che il modello discrimini il meglio possibile nell'altro ospedale. Per ciascun meccanismo decidi tu se rimuoverlo, attenuarlo o tenerlo, e motiva la scelta. I file model.npz e features.json sono nella cartella corrente.",
+ "tools": [
+  {
+   "name": "python",
+   "description": "Esegue codice Python 3 (numpy disponibile) in una cartella che contiene model.npz e features.json. Ogni chiamata parte da un processo nuovo: lo stato non si conserva tra una chiamata e l'altra, a meno che tu non salvi file nella cartella corrente. Restituisce stdout e stderr.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "code"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "forward_pass",
+   "description": "Valuta il modello su vettori di input che scegli tu. Budget totale: 30 vettori per tutta l'analisi (ogni vettore conta 1). Ogni vettore e' un oggetto {nome_feature: valore}; le feature non indicate valgono 0. Restituisce per ogni vettore il logit, la probabilita' e l'elenco dei neuroni nascosti attivi.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "inputs": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": {
+        "type": "number"
+       }
+      }
+     }
+    },
+    "required": [
+     "inputs"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "submit_fix",
+   "description": "Consegna la correzione. Prima salva i pesi corretti in model_fixed.npz (chiavi W1, b1, W2, b2, stesse forme).",
+   "strict": true,
+   "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "decisions",
+     "changes",
+     "expected_side_effects"
+    ],
+    "properties": {
+     "decisions": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "mechanism",
+        "decision",
+        "reason"
+       ],
+       "properties": {
+        "mechanism": {
+         "type": "string"
+        },
+        "decision": {
+         "type": "string",
+         "enum": [
+          "remove",
+          "attenuate",
+          "keep"
+         ]
+        },
+        "reason": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "changes": {
+      "type": "string",
+      "description": "Cosa hai modificato nei pesi."
+     },
+     "expected_side_effects": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ ],
+ "turns": [
+  {
+   "turn": 0,
+   "stop_reason": "tool_use",
+   "text": [
+    "Inizio ispezionando i pesi e le feature."
+   ],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'],m['b1'],m['W2'],float(m['b2'])\nf=json.load(open('features.json'))\nprint(type(f), len(f)); print(f if isinstance(f,list) else list(f.items())[:5])\nprint('b2',b2); print('W2',np.round(W2,3))\n"
+     },
+     "output": "<class 'list'> 75\n[{'index': 0, 'name': 'HR_last_z', 'description': 'ultimo valore noto di HR (forward fill; se mai misurato: valore normale 75), standardizzato'}, {'index': 1, 'name': 'O2Sat_last_z', 'description': 'ultimo valore noto di O2Sat (forward fill; se mai misurato: valore normale 97), standardizzato'}, {'index': 2, 'name': 'Temp_last_z', 'description': 'ultimo valore noto di Temp (forward fill; se mai misurato: valore normale 37.0), standardizzato'}, {'index': 3, 'name': 'SBP_last_z', 'description': 'ultimo valore noto di SBP (forward fill; se mai misurato: valore normale 120), standardizzato'}, {'index': 4, 'name': 'MAP_last_z', 'description': 'ultimo valore noto di MAP (forward fill; se mai misurato: valore normale 85), standardizzato'}, {'index': 5, 'name': 'DBP_last_z', 'description': 'ultimo valore noto di DBP (forward fill; se mai misurato: valore normale 70), standardizzato'}, {'index': 6, 'name': 'Resp_last_z', 'description': 'ultimo valore noto di Resp (forward fill; se mai misurato: valore normale 16), standardizzato'}, {'index': 7, 'name': 'EtCO2_last_z', 'description': 'ultimo valore noto di EtCO2 (forward fill; se mai misurato: valore normale 38), standardizzato'}, {'index': 8, 'name': 'BaseExcess_last_z', 'description': 'ultimo valore noto di BaseExcess (forward fill; se mai misurato: valore normale 0), standardizzato'}, {'index': 9, 'name': 'HCO3_last_z', 'description': 'ultimo valore noto di HCO3 (forward fill; se mai misurato: valore normale 24), standardizzato'}, {'index': 10, 'name': 'FiO2_last_z', 'description': 'ultimo valore noto di FiO2 (forward fill; se mai misurato: valore normale 0.21), standardizzato'}, {'index': 11, 'name': 'pH_last_z', 'description': 'ultimo valore noto di pH (forward fill; se mai misurato: valore normale 7.4), standardizzato'}, {'index': 12, 'name': 'PaCO2_last_z', 'description': 'ultimo valore noto di PaCO2 (forward fill; se mai misurato: valore normale 40), standardizzato'}, {'index': 13, 'name': 'SaO2_last_z', 'description': 'ultimo valore noto di SaO2 (forward fill; se mai misurato: valore normale 97), standardizzato'}, {'index': 14, 'name': 'AST_last_z', 'description': 'ultimo valore noto di AST (forward fill; se mai misurato: valore normale 25), standardizzato'}, {'index': 15, 'name': 'BUN_last_z', 'description': 'ultimo valore noto di BUN (forward fill; se mai misurato: valore normale 14), standardizzato'}, {'index': 16, 'name': 'Alkalinephos_last_z', 'description': 'ultimo valore noto di Alkalinephos (forward fill; se mai misurato: valore normale 70), standardizzato'}, {'index': 17, 'name': 'Calcium_last_z', 'description': 'ultimo valore noto di Calcium (forward fill; se mai misurato: valore normale 9.3), standardizzato'}, {'index': 18, 'name': 'Chloride_last_z', 'description': 'ultimo valore noto di Chloride (forward fill; se mai misurato: valore normale 102), standardizzato'}, {'index': 19, 'name': 'Creatinine_last_z', 'description': 'ultimo valore noto di Creatinine (forward fill; se mai misurato: valore normale 0.9), standardizzato'}, {'index': 20, 'name': 'Bilirubin_direct_last_z', 'description': 'ultimo valore noto di Bilirubin_direct (forward fill; se mai misurato: valore normale 0.2), standardizzato'}, {'index': 21, 'name': 'Glucose_last_z', 'description': 'ultimo valore noto di Glucose (forward fill; se mai misurato: valore normale 100), standardizzato'}, {'index': 22, 'name': 'Lactate_last_z', 'description': 'ultimo valore noto di Lactate (forward fill; se mai misurato: valore normale 1.0), standardizzato'}, {'index': 23, 'name': 'Magnesium_last_z', 'description': 'ultimo valore noto di Magnesium (forward fill; se mai misurato: valore normale 2.0), standardizzato'}, {'index': 24, 'name': 'Phosphate_last_z', 'description': 'ultimo valore noto di Phosphate (forward fill; se mai misurato: valore normale 3.5), standardizzato'}, {'index': 25, 'name': 'Potassium_last_z', 'description': 'ultimo valore noto di Potassium (forward fill; se mai misurato: valore normale 4.2), standardizzato'}, {'index': 26, 'name': 'Bilirubin_total_last_z', 'description': 'ultimo valore noto di Bilirubin_total (forward fill; se mai misurato: valore normale 0.7), standardizzato'}, {'index': 27, 'name': 'TroponinI_last_z', 'description': 'ultimo valore noto di TroponinI (forward fill; se mai misurato: valore normale 0.01), standardizzato'}, {'index': 28, 'name': 'Hct_last_z', 'description': 'ultimo valore noto di Hct (forward fill; se mai misurato: valore normale 42), standardizzato'}, {'index': 29, 'name': 'Hgb_last_z', 'description': 'ultimo valore noto di Hgb (forward fill; se mai misurato: valore normale 14), standardizzato'}, {'index': 30, 'name': 'PTT_last_z', 'description': 'ultimo valore noto di PTT (forward fill; se mai misurato: valore normale 30), standardizzato'}, {'index': 31, 'name': 'WBC_last_z', 'description': 'ultimo valore noto di WBC (forward fill; se mai misurato: valore normale 7.5), standardizzato'}, {'index': 32, 'name': 'Fibrinogen_last_z', 'description': 'ultimo valore noto di Fibrinogen (forward fill; se mai misurato: valore normale 300), standardizzato'}, {'index': 33, 'name': 'Platelets_last_z', 'description': 'ultimo valore noto di Platelets (forward fill; se mai misurato: valore normale 250), standardizzato'}, {'index': 34, 'name': 'HR_n_meas_6h', 'description': 'numero di misurazioni di HR nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 35, 'name': 'O2Sat_n_meas_6h', 'description': 'numero di misurazioni di O2Sat nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 36, 'name': 'Temp_n_meas_6h', 'description': 'numero di misurazioni di Temp nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 37, 'name': 'SBP_n_meas_6h', 'description': 'numero di misurazioni di SBP nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 38, 'name': 'MAP_n_meas_6h', 'description': 'numero di misurazioni di MAP nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 39, 'name': 'DBP_n_meas_6h', 'description': 'numero di misurazioni di DBP nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 40, 'name': 'Resp_n_meas_6h', 'description': 'numero di misurazioni di Resp nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 41, 'name': 'EtCO2_n_meas_6h', 'description': 'numero di misurazioni di EtCO2 nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 42, 'name': 'BaseExcess_n_meas_6h', 'description': 'numero di misurazioni di BaseExcess nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 43, 'name': 'HCO3_n_meas_6h', 'description': 'numero di misurazioni di HCO3 nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 44, 'name': 'FiO2_n_meas_6h', 'description': 'numero di misurazioni di FiO2 nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 45, 'name': 'pH_n_meas_6h', 'description': 'numero di misurazioni di pH nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 46, 'name': 'PaCO2_n_meas_6h', 'description': 'numero di misurazioni di PaCO2 nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 47, 'name': 'SaO2_n_meas_6h', 'description': 'numero di misurazioni di SaO2 nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 48, 'name': 'AST_n_meas_6h', 'description': 'numero di misurazioni di AST nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 49, 'name': 'BUN_n_meas_6h', 'description': 'numero di misurazioni di BUN nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 50, 'name': 'Alkalinephos_n_meas_6h', 'description': 'numero di misurazioni di Alkalinephos nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 51, 'name': 'Calcium_n_meas_6h', 'description': 'numero di misurazioni di Calcium nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 52, 'name': 'Chloride_n_meas_6h', 'description': 'numero di misurazioni di Chloride nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 53, 'name': 'Creatinine_n_meas_6h', 'description': 'numero di misurazioni di Creatinine nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 54, 'name': 'Bilirubin_direct_n_meas_6h', 'description': 'numero di misurazioni di Bilirubin_direct nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 55, 'name': 'Glucose_n_meas_6h', 'description': 'numero di misurazioni di Glucose nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 56, 'name': 'Lactate_n_meas_6h', 'description': 'numero di misurazioni di Lactate nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 57, 'name': 'Magnesium_n_meas_6h', 'description': 'numero di misurazioni di Magnesium nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 58, 'name': 'Phosphate_n_meas_6h', 'description': 'numero di misurazioni di Phosphate nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 59, 'name': 'Potassium_n_meas_6h', 'description': 'numero di misurazioni di Potassium nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 60, 'name': 'Bilirubin_total_n_meas_6h', 'description': 'numero di misurazioni di Bilirubin_total nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 61, 'name': 'TroponinI_n_meas_6h', 'description': 'numero di misurazioni di TroponinI nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 62, 'name': 'Hct_n_meas_6h', 'description': 'numero di misurazioni di Hct nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 63, 'name': 'Hgb_n_meas_6h', 'description': 'numero di misurazioni di Hgb nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 64, 'name': 'PTT_n_meas_6h', 'description': 'numero di misurazioni di PTT nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 65, 'name': 'WBC_n_meas_6h', 'description': 'numero di misurazioni di WBC nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 66, 'name': 'Fibrinogen_n_meas_6h', 'description': 'numero di misurazioni di Fibrinogen nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 67, 'name': 'Platelets_n_meas_6h', 'description': 'numero di misurazioni di Platelets nelle ultime 6 ore (0-6), non standardizzato'}, {'index': 68, 'name': 'Age_z', 'description': \"eta' in anni, standardizzata\"}, {'index': 69, 'name': 'Gender_male', 'description': '1 = maschio, 0 = femmina'}, {'index': 70, 'name': 'Unit_MICU', 'description': '1 = terapia intensiva medica'}, {'index': 71, 'name': 'Unit_SICU', 'description': '1 = terapia intensiva chirurgica'}, {'index': 72, 'name': 'HospAdmTime_z', 'description': 'ore tra ricovero in ospedale e ingresso in terapia intensiva (negativo = prima), standardizzato'}, {'index': 73, 'name': 'ICULOS_z', 'description': \"ore trascorse dall'ingresso in terapia intensiva, standardizzato\"}, {'index': 74, 'name': 'blood_culture_ordered', 'description': \"1 = emocoltura richiesta in quest'ora\"}]\nb2 -0.015370424836874008\nW2 [-0.266  0.074  0.196  0.228  0.212 -0.302 -0.146 -0.266 -0.708 -0.232\n -0.578 -0.251 -0.239  0.15  -0.263 -0.402 -0.37  -0.192  0.115  0.357\n -0.207 -0.234  0.349 -0.332 -0.232 -0.122  0.271  0.119 -0.811 -0.268\n  0.403 -0.338]\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 1,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'],m['b1'],m['W2'],float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]\nnp.set_printoptions(linewidth=200, precision=3, suppress=True)\n# effective linear contribution per feature per neuron: W2[j]*W1[j,i]\nE = W2[:,None]*W1\nprint(\"feature | sum_j W2j*W1ji | sum |W2j W1ji|\")\nfor i in range(75):\n    print(f\"{i:2d} {names[i]:28s} {E[:,i].sum():7.3f} {np.abs(E[:,i]).sum():7.3f}\")\nprint('b1',b1)\n"
+     },
+     "output": "feature | sum_j W2j*W1ji | sum |W2j W1ji|\n 0 HR_last_z                      0.428   1.263\n 1 O2Sat_last_z                  -0.019   0.688\n 2 Temp_last_z                    0.195   0.846\n 3 SBP_last_z                     0.069   0.726\n 4 MAP_last_z                    -0.137   0.819\n 5 DBP_last_z                    -0.254   0.604\n 6 Resp_last_z                    0.196   1.227\n 7 EtCO2_last_z                  -0.073   0.516\n 8 BaseExcess_last_z              0.079   0.800\n 9 HCO3_last_z                    0.160   1.027\n10 FiO2_last_z                    0.296   1.434\n11 pH_last_z                     -0.230   0.818\n12 PaCO2_last_z                   0.024   0.688\n13 SaO2_last_z                   -0.414   1.309\n14 AST_last_z                     0.068   1.205\n15 BUN_last_z                     0.450   1.394\n16 Alkalinephos_last_z           -0.000   0.701\n17 Calcium_last_z                -0.249   1.180\n18 Chloride_last_z                0.006   0.696\n19 Creatinine_last_z              0.501   1.053\n20 Bilirubin_direct_last_z        0.606   1.190\n21 Glucose_last_z                 0.002   0.836\n22 Lactate_last_z                 0.112   0.935\n23 Magnesium_last_z               0.124   1.094\n24 Phosphate_last_z              -0.148   0.630\n25 Potassium_last_z              -0.083   0.740\n26 Bilirubin_total_last_z         0.077   0.894\n27 TroponinI_last_z               0.386   1.398\n28 Hct_last_z                     0.108   0.964\n29 Hgb_last_z                     0.211   0.726\n30 PTT_last_z                     0.524   1.706\n31 WBC_last_z                     0.415   1.252\n32 Fibrinogen_last_z             -0.037   0.999\n33 Platelets_last_z              -0.025   0.935\n34 HR_n_meas_6h                  -0.359   0.613\n35 O2Sat_n_meas_6h               -0.072   0.592\n36 Temp_n_meas_6h                 0.019   0.634\n37 SBP_n_meas_6h                 -0.230   0.587\n38 MAP_n_meas_6h                  0.167   0.615\n39 DBP_n_meas_6h                 -0.003   0.662\n40 Resp_n_meas_6h                 0.083   0.601\n41 EtCO2_n_meas_6h               -0.070   0.456\n42 BaseExcess_n_meas_6h           0.243   0.542\n43 HCO3_n_meas_6h                 0.097   0.662\n44 FiO2_n_meas_6h                 0.177   0.924\n45 pH_n_meas_6h                  -0.158   0.626\n46 PaCO2_n_meas_6h                0.071   0.588\n47 SaO2_n_meas_6h                 0.152   0.689\n48 AST_n_meas_6h                  0.351   0.843\n49 BUN_n_meas_6h                 -0.204   0.650\n50 Alkalinephos_n_meas_6h        -0.170   0.832\n51 Calcium_n_meas_6h             -0.029   0.537\n52 Chloride_n_meas_6h            -0.423   0.673\n53 Creatinine_n_meas_6h          -0.228   0.623\n54 Bilirubin_direct_n_meas_6h     0.066   0.840\n55 Glucose_n_meas_6h             -0.113   0.597\n56 Lactate_n_meas_6h              0.594   0.923\n57 Magnesium_n_meas_6h            0.124   0.873\n58 Phosphate_n_meas_6h            0.071   0.498\n59 Potassium_n_meas_6h            0.158   0.502\n60 Bilirubin_total_n_meas_6h      0.458   0.797\n61 TroponinI_n_meas_6h           -0.043   1.166\n62 Hct_n_meas_6h                 -0.199   0.698\n63 Hgb_n_meas_6h                 -0.039   0.737\n64 PTT_n_meas_6h                  0.058   0.606\n65 WBC_n_meas_6h                  0.111   0.517\n66 Fibrinogen_n_meas_6h           0.208   1.048\n67 Platelets_n_meas_6h           -0.308   0.779\n68 Age_z                          0.317   1.211\n69 Gender_male                   -0.125   0.765\n70 Unit_MICU                      0.281   1.134\n71 Unit_SICU                     -1.419   1.769\n72 HospAdmTime_z                 -0.460   1.180\n73 ICULOS_z                       1.272   1.718\n74 blood_culture_ordered          6.053   6.068\nb1 [ 0.742 -0.039 -0.111  0.007 -0.134  0.414  0.142  0.393  1.035 -0.013  0.828  0.32   0.188 -0.079  0.412  0.644  0.323  0.259 -0.286 -0.066  0.19   0.212 -0.274  0.505  0.226  0.265 -0.141 -0.258\n  0.917  0.547 -0.093  0.378]\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 2,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'],m['b1'],m['W2'],float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]\nnp.set_printoptions(linewidth=200, precision=3, suppress=True)\nfor j in range(32):\n    w=W1[j]; idx=np.argsort(-np.abs(w))[:6]\n    print(f\"n{j:2d} W2={W2[j]:+.3f} b1={b1[j]:+.3f} bc={w[74]:+.3f} | \"+\", \".join(f\"{names[i]}:{w[i]:+.2f}\" for i in idx))\n"
+     },
+     "output": "n 0 W2=-0.266 b1=+0.742 bc=-0.623 | blood_culture_ordered:-0.62, Unit_MICU:-0.44, Unit_SICU:+0.37, Platelets_last_z:-0.37, Calcium_last_z:+0.36, ICULOS_z:-0.29\nn 1 W2=+0.074 b1=-0.039 bc=-0.085 | BUN_n_meas_6h:-0.13, Gender_male:-0.13, Bilirubin_direct_n_meas_6h:-0.12, Unit_MICU:-0.12, Resp_n_meas_6h:-0.12, Magnesium_last_z:-0.11\nn 2 W2=+0.196 b1=-0.111 bc=-0.008 | MAP_last_z:+0.32, Bilirubin_direct_n_meas_6h:-0.21, Resp_last_z:+0.18, Fibrinogen_last_z:+0.18, BUN_last_z:-0.16, Temp_last_z:+0.13\nn 3 W2=+0.228 b1=+0.007 bc=+0.040 | Phosphate_last_z:-0.33, Calcium_last_z:-0.23, PTT_last_z:+0.19, DBP_last_z:-0.18, Glucose_last_z:+0.17, TroponinI_n_meas_6h:-0.15\nn 4 W2=+0.212 b1=-0.134 bc=+0.826 | blood_culture_ordered:+0.83, ICULOS_z:+0.22, Hct_last_z:+0.17, Fibrinogen_n_meas_6h:+0.15, Calcium_n_meas_6h:+0.14, MAP_n_meas_6h:+0.13\nn 5 W2=-0.302 b1=+0.414 bc=-0.966 | blood_culture_ordered:-0.97, PTT_last_z:-0.27, pH_last_z:+0.26, Gender_male:-0.24, WBC_last_z:+0.22, Calcium_last_z:-0.21\nn 6 W2=-0.146 b1=+0.142 bc=-0.732 | blood_culture_ordered:-0.73, FiO2_last_z:-0.43, ICULOS_z:-0.25, Phosphate_last_z:+0.23, Glucose_last_z:+0.20, HR_last_z:+0.19\nn 7 W2=-0.266 b1=+0.393 bc=-0.690 | blood_culture_ordered:-0.69, Bilirubin_total_last_z:-0.43, WBC_last_z:-0.40, DBP_last_z:+0.37, HR_last_z:-0.33, HospAdmTime_z:+0.33\nn 8 W2=-0.708 b1=+1.035 bc=-0.665 | blood_culture_ordered:-0.66, Bilirubin_direct_last_z:-0.45, Unit_MICU:+0.26, Magnesium_last_z:-0.24, Fibrinogen_n_meas_6h:-0.22, FiO2_last_z:-0.22\nn 9 W2=-0.232 b1=-0.013 bc=-0.057 | ICULOS_z:-0.26, SBP_last_z:+0.22, BUN_last_z:+0.20, pH_last_z:-0.19, TroponinI_n_meas_6h:+0.19, Phosphate_last_z:+0.19\nn10 W2=-0.578 b1=+0.828 bc=-0.528 | PTT_last_z:-0.87, Unit_SICU:+0.76, TroponinI_last_z:-0.68, BUN_last_z:-0.67, Creatinine_last_z:-0.62, HospAdmTime_z:+0.58\nn11 W2=-0.251 b1=+0.320 bc=-0.717 | blood_culture_ordered:-0.72, PTT_last_z:-0.34, HCO3_last_z:-0.21, SBP_last_z:+0.19, Platelets_last_z:+0.19, Creatinine_last_z:+0.18\nn12 W2=-0.239 b1=+0.188 bc=-0.788 | blood_culture_ordered:-0.79, HospAdmTime_z:+0.32, WBC_last_z:-0.30, MAP_last_z:+0.26, PTT_last_z:+0.22, Resp_last_z:-0.20\nn13 W2=+0.150 b1=-0.079 bc=+0.029 | Alkalinephos_n_meas_6h:-0.13, Hgb_n_meas_6h:-0.12, TroponinI_n_meas_6h:-0.11, HR_last_z:-0.11, MAP_n_meas_6h:-0.10, MAP_last_z:+0.10\nn14 W2=-0.263 b1=+0.412 bc=-0.780 | blood_culture_ordered:-0.78, FiO2_last_z:-0.51, Fibrinogen_n_meas_6h:-0.35, Lactate_n_meas_6h:-0.27, BUN_last_z:-0.24, BaseExcess_n_meas_6h:-0.24\nn15 W2=-0.402 b1=+0.644 bc=-0.821 | Bilirubin_direct_last_z:-0.83, blood_culture_ordered:-0.82, TroponinI_last_z:-0.47, AST_last_z:-0.45, Bilirubin_total_n_meas_6h:-0.37, WBC_last_z:-0.35\nn16 W2=-0.370 b1=+0.323 bc=-0.571 | blood_culture_ordered:-0.57, Unit_SICU:+0.52, BUN_last_z:-0.49, ICULOS_z:-0.43, WBC_last_z:+0.41, AST_last_z:-0.36\nn17 W2=-0.192 b1=+0.259 bc=-0.453 | blood_culture_ordered:-0.45, Fibrinogen_last_z:-0.30, HR_last_z:-0.30, Age_z:+0.25, Unit_SICU:+0.24, MAP_last_z:+0.23\nn18 W2=+0.115 b1=-0.286 bc=+0.941 | blood_culture_ordered:+0.94, Unit_MICU:+0.21, MAP_last_z:-0.18, ICULOS_z:+0.17, HCO3_n_meas_6h:+0.17, Lactate_n_meas_6h:+0.17\nn19 W2=+0.357 b1=-0.066 bc=+0.435 | TroponinI_n_meas_6h:-0.57, blood_culture_ordered:+0.44, WBC_last_z:+0.42, ICULOS_z:+0.35, Temp_last_z:-0.29, Fibrinogen_last_z:-0.26\nn20 W2=-0.207 b1=+0.190 bc=-0.767 | blood_culture_ordered:-0.77, PTT_last_z:+0.32, Platelets_last_z:-0.32, ICULOS_z:-0.32, Fibrinogen_last_z:+0.30, SaO2_last_z:-0.28\nn21 W2=-0.234 b1=+0.212 bc=-0.841 | blood_culture_ordered:-0.84, Magnesium_last_z:+0.28, Lactate_last_z:-0.24, ICULOS_z:-0.20, Age_z:-0.20, Fibrinogen_last_z:+0.19\nn22 W2=+0.349 b1=-0.274 bc=+0.507 | blood_culture_ordered:+0.51, Glucose_last_z:+0.32, ICULOS_z:+0.29, Hgb_last_z:-0.24, HCO3_last_z:+0.24, HR_last_z:+0.23\nn23 W2=-0.332 b1=+0.505 bc=-0.771 | blood_culture_ordered:-0.77, SaO2_last_z:+0.28, Unit_SICU:+0.27, Temp_last_z:-0.20, Creatinine_last_z:-0.19, Magnesium_last_z:-0.19\nn24 W2=-0.232 b1=+0.226 bc=-0.566 | PTT_last_z:-0.59, blood_culture_ordered:-0.57, Fibrinogen_last_z:-0.29, FiO2_last_z:-0.27, SaO2_last_z:+0.26, HR_last_z:-0.22\nn25 W2=-0.122 b1=+0.265 bc=-0.785 | blood_culture_ordered:-0.78, FiO2_last_z:-0.31, HospAdmTime_z:+0.30, HR_last_z:-0.27, Resp_last_z:-0.26, AST_last_z:-0.26\nn26 W2=+0.271 b1=-0.141 bc=+0.067 | HospAdmTime_z:+0.28, TroponinI_n_meas_6h:-0.22, Fibrinogen_last_z:-0.21, AST_last_z:+0.16, Bilirubin_total_last_z:+0.16, Platelets_last_z:-0.16\nn27 W2=+0.119 b1=-0.258 bc=+1.209 | blood_culture_ordered:+1.21, Unit_MICU:+0.19, ICULOS_z:+0.18, HospAdmTime_z:-0.17, AST_n_meas_6h:+0.17, Hct_n_meas_6h:+0.17\nn28 W2=-0.811 b1=+0.917 bc=-1.500 | blood_culture_ordered:-1.50, FiO2_last_z:+0.30, Unit_SICU:+0.26, Calcium_last_z:-0.20, Hct_last_z:+0.20, Age_z:+0.16\nn29 W2=-0.268 b1=+0.547 bc=-0.756 | blood_culture_ordered:-0.76, Unit_SICU:+0.42, ICULOS_z:-0.35, FiO2_last_z:+0.31, SaO2_last_z:+0.30, PTT_last_z:+0.30\nn30 W2=+0.403 b1=-0.093 bc=+0.020 | BUN_n_meas_6h:-0.37, Magnesium_n_meas_6h:-0.33, AST_last_z:-0.32, pH_last_z:-0.28, Temp_last_z:-0.26, BaseExcess_last_z:-0.26\nn31 W2=-0.338 b1=+0.378 bc=-0.778 | blood_culture_ordered:-0.78, Unit_SICU:+0.35, ICULOS_z:-0.34, Hct_last_z:-0.26, Unit_MICU:-0.25, Magnesium_last_z:+0.24\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 3,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'],m['b1'],m['W2'],float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]; ix={n:i for i,n in enumerate(names)}\ndef fwd(x,W1=W1,b1=b1,W2=W2,b2=b2):\n    h=np.maximum(0,W1@x+b1); return W2@h+b2\ndef probe(d,**kw):\n    x=np.zeros(75)\n    for k,v in d.items(): x[ix[k]]=v\n    return fwd(x,**kw)\nbase=probe({})\ntests={'zero':{}, 'bc=1':{'blood_culture_ordered':1},'SICU':{'Unit_SICU':1},'MICU':{'Unit_MICU':1},\n 'ICULOS+2':{'ICULOS_z':2},'ICULOS-1':{'ICULOS_z':-1},'HospAdm-2':{'HospAdmTime_z':-2},'HospAdm+2':{'HospAdmTime_z':2},\n 'Lact+2':{'Lactate_last_z':2},'HR+2':{'HR_last_z':2},'Temp+2':{'Temp_last_z':2},'Temp-2':{'Temp_last_z':-2},'Resp+2':{'Resp_last_z':2},\n 'WBC+2':{'WBC_last_z':2},'WBC-2':{'WBC_last_z':-2},'MAP-2':{'MAP_last_z':-2},'SBP-2':{'SBP_last_z':-2},\n 'Lact_n=2':{'Lactate_n_meas_6h':2},'HR_n=6':{'HR_n_meas_6h':6},'Bili_n=1':{'Bilirubin_total_n_meas_6h':1},\n 'septic':{'Lactate_last_z':2,'HR_last_z':2,'Temp_last_z':1.5,'Resp_last_z':2,'WBC_last_z':1.5,'MAP_last_z':-1.5,'SBP_last_z':-1.5}}\nfor k,d in tests.items(): print(f\"{k:12s} {probe(d):+.3f}\")\n"
+     },
+     "output": "zero         -3.695\nbc=1         +0.077\nSICU         -5.180\nMICU         -3.283\nICULOS+2     -2.135\nICULOS-1     -4.573\nHospAdm-2    -2.891\nHospAdm+2    -4.651\nLact+2       -3.605\nHR+2         -3.237\nTemp+2       -3.075\nTemp-2       -3.975\nResp+2       -3.427\nWBC+2        -3.255\nWBC-2        -4.263\nMAP-2        -3.273\nSBP-2        -3.772\nLact_n=2     -2.674\nHR_n=6       -5.711\nBili_n=1     -3.341\nseptic       -3.330\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 4,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'].copy(),m['b1'].copy(),m['W2'].copy(),float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]; ix={n:i for i,n in enumerate(names)}\n# neuron usefulness\nfor j in range(32):\n    w=W1[j].copy(); w[74]=0; w[70]=w[71]=0\n    print(j, round(float(abs(W2[j])*np.linalg.norm(w)),3), round(float(np.linalg.norm(w)),3), round(float(W2[j]),3), round(float(b1[j]),3))\n"
+     },
+     "output": "0 0.299 1.126 -0.266 0.742\n1 0.037 0.5 0.074 -0.039\n2 0.149 0.76 0.196 -0.111\n3 0.174 0.761 0.228 0.007\n4 0.142 0.667 0.212 -0.134\n5 0.286 0.946 -0.302 0.414\n6 0.131 0.894 -0.146 0.142\n7 0.344 1.291 -0.266 0.393\n8 0.678 0.958 -0.708 1.035\n9 0.207 0.891 -0.232 -0.013\n10 1.164 2.014 -0.578 0.828\n11 0.206 0.82 -0.251 0.32\n12 0.226 0.944 -0.239 0.188\n13 0.071 0.472 0.15 -0.079\n14 0.319 1.212 -0.263 0.412\n15 0.68 1.69 -0.402 0.644\n16 0.437 1.182 -0.37 0.323\n17 0.179 0.929 -0.192 0.259\n18 0.086 0.749 0.115 -0.286\n19 0.427 1.196 0.357 -0.066\n20 0.232 1.121 -0.207 0.19\n21 0.196 0.839 -0.234 0.212\n22 0.359 1.03 0.349 -0.274\n23 0.249 0.75 -0.332 0.505\n24 0.25 1.08 -0.232 0.226\n25 0.124 1.018 -0.122 0.265\n26 0.22 0.812 0.271 -0.141\n27 0.084 0.7 0.119 -0.258\n28 0.587 0.724 -0.811 0.917\n29 0.304 1.135 -0.268 0.547\n30 0.466 1.156 0.403 -0.093\n31 0.295 0.874 -0.338 0.378\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 5,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'].copy(),m['b1'].copy(),m['W2'].copy(),float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]; ix={n:i for i,n in enumerate(names)}\nW1o,b1o,W2o,b2o=W1.copy(),b1.copy(),W2.copy(),b2\n\n# 1. Leakage: remove blood_culture_ordered\nW1[:,ix['blood_culture_ordered']]=0\n# 2. Unit shortcut: remove\nfor c in ['Unit_MICU','Unit_SICU']: W1[:,ix[c]]=0\n# 3. Missingness counts: x' = mu + alpha*(x-mu)  -> W1*alpha, b1 += W1*(1-alpha)*mu\nmu={'HR':5.4,'O2Sat':5.4,'SBP':5.4,'MAP':5.4,'DBP':5.4,'Resp':5.4,'Temp':2.0,'EtCO2':0.2,\n    'BaseExcess':0.35,'HCO3':0.35,'pH':0.35,'PaCO2':0.35,'FiO2':0.5,'SaO2':0.25,\n    'AST':0.12,'Alkalinephos':0.12,'Bilirubin_total':0.12,'Bilirubin_direct':0.03,\n    'BUN':0.4,'Creatinine':0.4,'Calcium':0.4,'Chloride':0.4,'Magnesium':0.4,'Phosphate':0.4,'Potassium':0.4,\n    'Glucose':0.6,'Hct':0.4,'Hgb':0.4,'WBC':0.4,'Platelets':0.4,'Lactate':0.15,'TroponinI':0.07,'PTT':0.2,'Fibrinogen':0.05}\nflag=['Lactate','Bilirubin_total','AST','FiO2','Fibrinogen','Magnesium','HR','Platelets','Chloride','SBP','Creatinine']\nfor v,mv in mu.items():\n    c=ix[v+'_n_meas_6h']; a=0.3 if v in flag else 0.6\n    b1+=W1[:,c]*(1-a)*mv; W1[:,c]*=a\n# 4. Temporal: attenuate\nfor c in ['ICULOS_z','HospAdmTime_z']: W1[:,ix[c]]*=0.5\n# 5. Physiology: repurpose near-dead / weak neurons 18,27,4 (bc-driven) and 1,13 (weak) as clinical-prior units\ndef setn(j,wd,b,w2):\n    W1[j]=0; \n    for k,v in wd.items(): W1[j,ix[k]]=v\n    b1[j]=b; W2[j]=w2\nsetn(27,{'HR_last_z':0.3,'Resp_last_z':0.3,'Lactate_last_z':0.4,'MAP_last_z':-0.2,'SBP_last_z':-0.1},4.0,1.0); b2-=4.0  # linear term\nsetn(18,{'Temp_last_z':1.0},-1.0,0.4)    # fever\nsetn(4, {'Temp_last_z':-1.0},-1.0,0.3)   # hypothermia\nsetn(1, {'WBC_last_z':1.0},-1.0,0.3)     # leukocytosis\nsetn(13,{'WBC_last_z':-1.0},-1.5,0.3)    # leukopenia\nnp.savez('model_fixed.npz',W1=W1,b1=b1,W2=W2,b2=np.float64(b2))\n\ndef fwd(x,W1=W1,b1=b1,W2=W2,b2=b2):\n    h=np.maximum(0,W1@x+b1); return W2@h+b2\ndef probe(d,new=True):\n    x=np.zeros(75)\n    for k,v in d.items(): x[ix[k]]=v\n    return fwd(x) if new else fwd(x,W1o,b1o,W2o,b2o)\ntyp={k+'_n_meas_6h':v for k,v in mu.items()}\ntests={'zero':{}, 'typical':typ,'bc=1':{'blood_culture_ordered':1},'SICU':{'Unit_SICU':1},'MICU':{'Unit_MICU':1},\n 'ICULOS+2':{'ICULOS_z':2},'HospAdm-2':{'HospAdmTime_z':-2},\n 'Lact+2':{'Lactate_last_z':2},'HR+2':{'HR_last_z':2},'Temp+2':{'Temp_last_z':2},'Temp-2':{'Temp_last_z':-2},'Resp+2':{'Resp_last_z':2},\n 'WBC+2':{'WBC_last_z':2},'WBC-2':{'WBC_last_z':-2},'MAP-2':{'MAP_last_z':-2},'SBP-2':{'SBP_last_z':-2},\n 'Lact_n=2':{'Lactate_n_meas_6h':2},'HR_n=6':{'HR_n_meas_6h':6},'HR_n=0':{'HR_n_meas_6h':0},'Bili_n=1':{'Bilirubin_total_n_meas_6h':1},\n 'septic':{'Lactate_last_z':2,'HR_last_z':2,'Temp_last_z':1.5,'Resp_last_z':2,'WBC_last_z':1.5,'MAP_last_z':-1.5,'SBP_last_z':-1.5}}\nprint(f\"{'':12s} {'orig':>8s} {'new':>8s}\")\nfor k,d in tests.items(): print(f\"{k:12s} {probe(d,False):+8.3f} {probe(d):+8.3f}\")\n# random synthetic population: correlation between old and new logits, and spread\nrng=np.random.default_rng(0)\nN=5000; X=np.zeros((N,75)); X[:,:34]=rng.normal(0,1,(N,34)); X[:,68]=rng.normal(0,1,N); X[:,69]=rng.integers(0,2,N)\nX[:,72]=rng.normal(0,1,N); X[:,73]=rng.normal(0,1,N)\nfor v,mv in mu.items(): X[:,ix[v+'_n_meas_6h']]=np.clip(rng.poisson(mv,N),0,6)\nX[:,70]=rng.random(N)<0.3; X[:,71]=(rng.random(N)<0.3)&(X[:,70]==0); X[:,74]=rng.random(N)<0.03\nLo=np.array([fwd(x,W1o,b1o,W2o,b2o) for x in X]); Ln=np.array([fwd(x) for x in X])\nprint('std orig',Lo.std(),'std new',Ln.std(),'corr',np.corrcoef(Lo,Ln)[0,1])\nHo=np.maximum(0,X@W1.T+b1); print('active fraction new neurons', (Ho>0).mean(0).round(2))\n"
+     },
+     "output": "                 orig      new\nzero           -3.695   -5.115\ntypical        -4.856   -5.779\nbc=1           +0.077   -5.115\nSICU           -5.180   -5.115\nMICU           -3.283   -5.115\nICULOS+2       -2.135   -4.551\nHospAdm-2      -2.891   -4.890\nLact+2         -3.605   -4.115\nHR+2           -3.237   -4.421\nTemp+2         -3.075   -4.030\nTemp-2         -3.975   -5.552\nResp+2         -3.427   -4.682\nWBC+2          -3.255   -4.594\nWBC-2          -4.263   -5.385\nMAP-2          -3.273   -4.369\nSBP-2          -3.772   -5.036\nLact_n=2       -2.674   -4.792\nHR_n=6         -5.711   -5.733\nHR_n=0         -3.695   -5.115\nBili_n=1       -3.341   -5.001\nseptic         -3.330   -1.864\nstd orig 1.740382460182615 std new 1.352697290493757 corr 0.705749483613324\nactive fraction new neurons [0.85 0.16 0.14 0.13 0.16 0.88 0.91 0.46 0.46 0.06 0.32 0.95 0.9  0.07\n 0.84 0.66 0.81 0.99 0.16 0.01 0.63 0.58 0.19 1.   0.96 0.99 0.06 1.\n 0.96 0.97 0.03 0.97]\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 6,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1o,b1o,W2o,b2o=m['W1'],m['b1'],m['W2'],float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]; ix={n:i for i,n in enumerate(names)}\nmu={'HR':5.4,'O2Sat':5.4,'SBP':5.4,'MAP':5.4,'DBP':5.4,'Resp':5.4,'Temp':2.0,'EtCO2':0.2,\n    'BaseExcess':0.35,'HCO3':0.35,'pH':0.35,'PaCO2':0.35,'FiO2':0.5,'SaO2':0.25,\n    'AST':0.12,'Alkalinephos':0.12,'Bilirubin_total':0.12,'Bilirubin_direct':0.03,\n    'BUN':0.4,'Creatinine':0.4,'Calcium':0.4,'Chloride':0.4,'Magnesium':0.4,'Phosphate':0.4,'Potassium':0.4,\n    'Glucose':0.6,'Hct':0.4,'Hgb':0.4,'WBC':0.4,'Platelets':0.4,'Lactate':0.15,'TroponinI':0.07,'PTT':0.2,'Fibrinogen':0.05}\nrng=np.random.default_rng(0)\nN=5000; X=np.zeros((N,75)); X[:,:34]=rng.normal(0,1,(N,34)); X[:,68]=rng.normal(0,1,N); X[:,69]=rng.integers(0,2,N)\nX[:,72]=rng.normal(0,1,N); X[:,73]=rng.normal(0,1,N)\nfor v,mv in mu.items(): X[:,ix[v+'_n_meas_6h']]=np.clip(rng.poisson(mv,N),0,6)\nX[:,70]=rng.random(N)<0.3; X[:,71]=(rng.random(N)<0.3)&(X[:,70]==0); X[:,74]=rng.random(N)<0.03\nHo=np.maximum(0,X@W1o.T+b1o); print('active fraction orig', (Ho>0).mean(0).round(2))\n# contribution of each neuron: W2*mean(h)\nprint('orig contrib', (W2o*Ho.mean(0)).round(2))\nprint('logit mean orig', (Ho@W2o+b2o).mean())\n"
+     },
+     "output": "active fraction orig [0.8  0.02 0.17 0.16 1.   0.82 0.87 0.46 0.5  0.12 0.37 0.92 0.83 0.02\n 0.77 0.64 0.75 0.98 1.   0.03 0.57 0.55 0.22 0.99 0.94 0.98 0.09 1.\n 0.93 0.94 0.04 0.91]\norig contrib [-0.29  0.    0.01  0.01  0.42 -0.28 -0.15 -0.11 -0.26 -0.01 -0.29 -0.29\n -0.23  0.   -0.25 -0.37 -0.35 -0.37  0.2   0.   -0.11 -0.09  0.04 -0.54\n -0.39 -0.25  0.01  0.26 -0.88 -0.5   0.01 -0.44]\nlogit mean orig -5.482753613002952\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 7,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'].copy(),m['b1'].copy(),m['W2'].copy(),float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]; ix={n:i for i,n in enumerate(names)}\nmu={'HR':5.4,'O2Sat':5.4,'SBP':5.4,'MAP':5.4,'DBP':5.4,'Resp':5.4,'Temp':2.0,'EtCO2':0.2,\n    'BaseExcess':0.35,'HCO3':0.35,'pH':0.35,'PaCO2':0.35,'FiO2':0.5,'SaO2':0.25,\n    'AST':0.12,'Alkalinephos':0.12,'Bilirubin_total':0.12,'Bilirubin_direct':0.03,\n    'BUN':0.4,'Creatinine':0.4,'Calcium':0.4,'Chloride':0.4,'Magnesium':0.4,'Phosphate':0.4,'Potassium':0.4,\n    'Glucose':0.6,'Hct':0.4,'Hgb':0.4,'WBC':0.4,'Platelets':0.4,'Lactate':0.15,'TroponinI':0.07,'PTT':0.2,'Fibrinogen':0.05}\nflag=['Lactate','Bilirubin_total','AST','FiO2','Fibrinogen','Magnesium','HR','Platelets','Chloride','SBP','Creatinine']\nW1[:,ix['blood_culture_ordered']]=0\nfor c in ['Unit_MICU','Unit_SICU']: W1[:,ix[c]]=0\nfor v,mv in mu.items():\n    c=ix[v+'_n_meas_6h']; a=0.3 if v in flag else 0.6\n    b1+=W1[:,c]*(1-a)*mv; W1[:,c]*=a\nfor c in ['ICULOS_z','HospAdmTime_z']: W1[:,ix[c]]*=0.5\nrng=np.random.default_rng(0)\nN=5000; X=np.zeros((N,75)); X[:,:34]=rng.normal(0,1,(N,34)); X[:,68]=rng.normal(0,1,N); X[:,69]=rng.integers(0,2,N)\nX[:,72]=rng.normal(0,1,N); X[:,73]=rng.normal(0,1,N)\nfor v,mv in mu.items(): X[:,ix[v+'_n_meas_6h']]=np.clip(rng.poisson(mv,N),0,6)\nH=np.maximum(0,X@W1.T+b1); C=W2*H\nprint('active',(H>0).mean(0).round(2))\nprint('contrib std',C.std(0).round(3))\nprint('contrib mean',C.mean(0).round(2))\n# what do 4, 18, 27 compute now? top weights\nfor j in [1,13,4,18,27,9,19,26,30]:\n    w=W1[j]; idx=np.argsort(-np.abs(w))[:5]\n    print(j, round(float(b1[j]),2), \", \".join(f\"{names[i]}:{w[i]:+.2f}\" for i in idx))\n"
+     },
+     "output": "active [0.85 0.   0.14 0.13 1.   0.88 0.91 0.46 0.46 0.06 0.32 0.95 0.9  0.\n 0.84 0.66 0.81 0.99 1.   0.01 0.63 0.58 0.19 1.   0.96 0.99 0.06 1.\n 0.96 0.97 0.03 0.97]\ncontrib std [0.232 0.001 0.03  0.036 0.097 0.218 0.103 0.158 0.313 0.022 0.439 0.169\n 0.164 0.001 0.218 0.423 0.299 0.16  0.056 0.014 0.135 0.105 0.084 0.209\n 0.223 0.108 0.022 0.058 0.459 0.259 0.033 0.239]\ncontrib mean [-0.3   0.    0.01  0.01  0.43 -0.3  -0.16 -0.1  -0.2  -0.   -0.22 -0.3\n -0.24  0.   -0.27 -0.38 -0.35 -0.39  0.2   0.   -0.11 -0.08  0.03 -0.56\n -0.41 -0.27  0.    0.26 -0.85 -0.5   0.   -0.47]\n1 -0.59 Gender_male:-0.13, Magnesium_last_z:-0.11, SBP_last_z:+0.10, EtCO2_last_z:+0.09, Hgb_last_z:-0.09\n13 -0.49 HR_last_z:-0.11, MAP_last_z:+0.10, Alkalinephos_n_meas_6h:-0.08, SaO2_last_z:-0.08, Resp_last_z:-0.08\n4 0.84 Hct_last_z:+0.17, BUN_last_z:+0.12, ICULOS_z:+0.11, Magnesium_last_z:-0.11, Chloride_last_z:+0.10\n18 0.69 MAP_last_z:-0.18, Temp_last_z:+0.16, Gender_male:+0.16, BUN_last_z:+0.12, Hct_last_z:+0.11\n27 0.85 Hct_last_z:+0.14, HR_last_z:+0.14, Resp_last_z:+0.13, Gender_male:+0.13, Magnesium_last_z:-0.12\n9 -0.54 SBP_last_z:+0.22, BUN_last_z:+0.20, pH_last_z:-0.19, Phosphate_last_z:+0.19, Creatinine_last_z:+0.17\n19 -0.96 WBC_last_z:+0.42, TroponinI_n_meas_6h:-0.34, Temp_last_z:-0.29, Fibrinogen_last_z:-0.26, Bilirubin_total_last_z:+0.25\n26 -0.6 Fibrinogen_last_z:-0.21, AST_last_z:+0.16, Bilirubin_total_last_z:+0.16, Platelets_last_z:-0.16, HCO3_last_z:+0.16\n30 -0.83 AST_last_z:-0.32, pH_last_z:-0.28, Temp_last_z:-0.26, BaseExcess_last_z:-0.26, Bilirubin_direct_last_z:+0.22\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 8,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np, json\nm=np.load('model.npz'); W1,b1,W2,b2=m['W1'].copy(),m['b1'].copy(),m['W2'].copy(),float(m['b2'])\nW1o,b1o,W2o,b2o=m['W1'],m['b1'],m['W2'],float(m['b2'])\nf=json.load(open('features.json')); names=[x['name'] for x in f]; ix={n:i for i,n in enumerate(names)}\nmu={'HR':5.4,'O2Sat':5.4,'SBP':5.4,'MAP':5.4,'DBP':5.4,'Resp':5.4,'Temp':2.0,'EtCO2':0.2,\n    'BaseExcess':0.35,'HCO3':0.35,'pH':0.35,'PaCO2':0.35,'FiO2':0.5,'SaO2':0.25,\n    'AST':0.12,'Alkalinephos':0.12,'Bilirubin_total':0.12,'Bilirubin_direct':0.03,\n    'BUN':0.4,'Creatinine':0.4,'Calcium':0.4,'Chloride':0.4,'Magnesium':0.4,'Phosphate':0.4,'Potassium':0.4,\n    'Glucose':0.6,'Hct':0.4,'Hgb':0.4,'WBC':0.4,'Platelets':0.4,'Lactate':0.15,'TroponinI':0.07,'PTT':0.2,'Fibrinogen':0.05}\nflag=['Lactate','Bilirubin_total','AST','FiO2','Fibrinogen','Magnesium','HR','Platelets','Chloride','SBP','Creatinine']\n# 1 leakage\nW1[:,ix['blood_culture_ordered']]=0\n# 2 unit shortcut\nfor c in ['Unit_MICU','Unit_SICU']: W1[:,ix[c]]=0\n# 3 missingness: shrink toward typical count\nfor v,mv in mu.items():\n    c=ix[v+'_n_meas_6h']; a=0.3 if v in flag else 0.6\n    b1+=W1[:,c]*(1-a)*mv; W1[:,c]*=a\n# 4 temporal\nfor c in ['ICULOS_z','HospAdmTime_z']: W1[:,ix[c]]*=0.5\n# 5 physiology prior units on dead neurons 1,13,9,19,26\ndef setn(j,wd,b,w2):\n    W1[j]=0\n    for k,v in wd.items(): W1[j,ix[k]]=v\n    b1[j]=b; W2[j]=w2\nsetn(9,{'HR_last_z':0.3,'Resp_last_z':0.3,'Lactate_last_z':0.4,'MAP_last_z':-0.2,'SBP_last_z':-0.1},4.0,1.0); b2-=4.0\nsetn(1, {'Temp_last_z':1.0},-1.0,0.45)   # fever\nsetn(13,{'Temp_last_z':-1.0},-1.0,0.6)   # hypothermia\nsetn(19,{'WBC_last_z':1.0},-1.0,0.35)    # leukocytosis\nsetn(26,{'WBC_last_z':-1.0},-1.5,0.6)    # leukopenia\n# calibration: align mean logit on synthetic population\nrng=np.random.default_rng(0)\nN=5000; X=np.zeros((N,75)); X[:,:34]=rng.normal(0,1,(N,34)); X[:,68]=rng.normal(0,1,N); X[:,69]=rng.integers(0,2,N)\nX[:,72]=rng.normal(0,1,N); X[:,73]=rng.normal(0,1,N)\nfor v,mv in mu.items(): X[:,ix[v+'_n_meas_6h']]=np.clip(rng.poisson(mv,N),0,6)\nX[:,70]=rng.random(N)<0.3; X[:,71]=(rng.random(N)<0.3)&(X[:,70]==0); X[:,74]=rng.random(N)<0.03\nfw=lambda X,W1,b1,W2,b2: np.maximum(0,X@W1.T+b1)@W2+b2\nLo=fw(X,W1o,b1o,W2o,b2o); Ln=fw(X,W1,b1,W2,b2); b2+=Lo.mean()-Ln.mean(); Ln=fw(X,W1,b1,W2,b2)\nprint('means',Lo.mean(),Ln.mean(),'std',Lo.std(),Ln.std(),'corr',np.corrcoef(Lo,Ln)[0,1])\nnp.savez('model_fixed.npz',W1=W1,b1=b1,W2=W2,b2=np.float64(b2))\ndef probe(d,new=True):\n    x=np.zeros(75)\n    for k,v in d.items(): x[ix[k]]=v\n    return fw(x[None],W1,b1,W2,b2)[0] if new else fw(x[None],W1o,b1o,W2o,b2o)[0]\ntyp={k+'_n_meas_6h':v for k,v in mu.items()}\ntests={'typical':typ,'bc=1':{'blood_culture_ordered':1},'SICU':{'Unit_SICU':1},'MICU':{'Unit_MICU':1},\n 'ICULOS+2':{'ICULOS_z':2},'HospAdm-2':{'HospAdmTime_z':-2},\n 'Lact+2':{'Lactate_last_z':2},'HR+2':{'HR_last_z':2},'Temp+2':{'Temp_last_z':2},'Temp-2':{'Temp_last_z':-2},'Resp+2':{'Resp_last_z':2},\n 'WBC+2':{'WBC_last_z':2},'WBC-2':{'WBC_last_z':-2},'MAP-2':{'MAP_last_z':-2},'SBP-2':{'SBP_last_z':-2},\n 'Lact_n=2':{'Lactate_n_meas_6h':2},'HR_n=0':{'HR_n_meas_6h':0},'Bili_n=1':{'Bilirubin_total_n_meas_6h':1},\n 'septic':{'Lactate_last_z':2,'HR_last_z':2,'Temp_last_z':1.5,'Resp_last_z':2,'WBC_last_z':1.5,'MAP_last_z':-1.5,'SBP_last_z':-1.5}}\nprint(f\"{'':12s} {'orig':>8s} {'new':>8s}  (delta vs typical)\")\nbo,bn=probe(typ,False),probe(typ)\nfor k,d in tests.items():\n    dd=dict(typ); dd.update(d); print(f\"{k:12s} {probe(dd,False)-bo:+8.3f} {probe(dd)-bn:+8.3f}\")\nm2=np.load('model_fixed.npz'); print({k:m2[k].shape for k in m2})\n"
+     },
+     "output": "means -5.482753613002952 -5.482753613002952 std 1.740382460182615 1.4447976002190728 corr 0.709797486394339\n                 orig      new  (delta vs typical)\ntypical        +0.000   +0.000\nbc=1           +4.009   +0.000\nSICU           -1.064   +0.000\nMICU           +0.666   +0.000\nICULOS+2       +1.125   +0.649\nHospAdm-2      +0.579   +0.290\nLact+2         +0.315   +1.115\nHR+2           -0.028   +0.572\nTemp+2         +0.778   +1.228\nTemp-2         -0.778   -0.178\nResp+2         +0.149   +0.749\nWBC+2          +0.070   +0.420\nWBC-2          -0.278   +0.022\nMAP-2          +0.554   +0.954\nSBP-2          -0.066   +0.134\nLact_n=2       +0.833   +0.254\nHR_n=0         +1.336   +0.417\nBili_n=1       +0.355   +0.106\nseptic         +0.980   +3.830\n{'W1': (32, 75), 'b1': (32,), 'W2': (32,), 'b2': ()}\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 9,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "python",
+     "input": {
+      "code": "\nimport numpy as np\nm=np.load('model_fixed.npz'); W1,b1,W2,b2=m['W1'],m['b1'],m['W2'],m['b2']\nW2=W2.copy(); W2[13]=0.8; W2[26]=0.7\nnp.savez('model_fixed.npz',W1=W1,b1=b1,W2=W2,b2=b2)\nprint(float(b2), W2[[1,13,19,26,9]])\n"
+     },
+     "output": "-4.099777509769882 [0.45 0.8  0.35 0.7  1.  ]\n",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 10,
+   "stop_reason": "tool_use",
+   "text": [
+    "Ora verifico con il tool ufficiale su un piccolo set di vettori (baseline \"tipico\", leakage, unità, profilo settico, singole variabili fisiologiche)."
+   ],
+   "calls": [
+    {
+     "tool": "forward_pass",
+     "input": {
+      "inputs": [
+       {
+        "HR_n_meas_6h": 5,
+        "O2Sat_n_meas_6h": 5,
+        "SBP_n_meas_6h": 5,
+        "MAP_n_meas_6h": 5,
+        "DBP_n_meas_6h": 5,
+        "Resp_n_meas_6h": 5,
+        "Temp_n_meas_6h": 2
+       },
+       {
+        "HR_n_meas_6h": 5,
+        "O2Sat_n_meas_6h": 5,
+        "SBP_n_meas_6h": 5,
+        "MAP_n_meas_6h": 5,
+        "DBP_n_meas_6h": 5,
+        "Resp_n_meas_6h": 5,
+        "Temp_n_meas_6h": 2,
+        "blood_culture_ordered": 1
+       },
+       {
+        "HR_n_meas_6h": 5,
+        "O2Sat_n_meas_6h": 5,
+        "SBP_n_meas_6h": 5,
+        "MAP_n_meas_6h": 5,
+        "DBP_n_meas_6h": 5,
+        "Resp_n_meas_6h": 5,
+        "Temp_n_meas_6h": 2,
+        "Unit_SICU": 1
+       },
+       {
+        "HR_n_meas_6h": 5,
+        "O2Sat_n_meas_6h": 5,
+        "SBP_n_meas_6h": 5,
+        "MAP_n_meas_6h": 5,
+        "DBP_n_meas_6h": 5,
+        "Resp_n_meas_6h": 5,
+        "Temp_n_meas_6h": 2,
+        "Lactate_last_z": 2,
+        "HR_last_z": 2,
+        "Temp_last_z": 1.5,
+        "Resp_last_z": 2,
+        "WBC_last_z": 1.5,
+        "MAP_last_z": -1.5,
+        "SBP_last_z": -1.5
+       },
+       {
+        "HR_n_meas_6h": 5,
+        "O2Sat_n_meas_6h": 5,
+        "SBP_n_meas_6h": 5,
+        "MAP_n_meas_6h": 5,
+        "DBP_n_meas_6h": 5,
+        "Resp_n_meas_6h": 5,
+        "Temp_n_meas_6h": 2,
+        "Lactate_last_z": 2
+       },
+       {
+        "HR_n_meas_6h": 5,
+        "O2Sat_n_meas_6h": 5,
+        "SBP_n_meas_6h": 5,
+        "MAP_n_meas_6h": 5,
+        "DBP_n_meas_6h": 5,
+        "Resp_n_meas_6h": 5,
+        "Temp_n_meas_6h": 2,
+        "Temp_last_z": -2,
+        "WBC_last_z": -2
+       },
+       {
+        "HR_n_meas_6h": 5,
+        "O2Sat_n_meas_6h": 5,
+        "SBP_n_meas_6h": 5,
+        "MAP_n_meas_6h": 5,
+        "DBP_n_meas_6h": 5,
+        "Resp_n_meas_6h": 5,
+        "Temp_n_meas_6h": 2,
+        "ICULOS_z": 2,
+        "Lactate_n_meas_6h": 2,
+        "Bilirubin_total_n_meas_6h": 1
+       }
+      ]
+     },
+     "output": "{\"results\": [{\"logit\": -5.1089, \"probability\": 0.006007, \"active_hidden_neurons\": [0, 4, 5, 6, 9, 11, 12, 14, 15, 16, 17, 18, 20, 21, 23, 24, 25, 27, 28, 29, 31]}, {\"logit\": -5.1089, \"probability\": 0.006007, \"active_hidden_neurons\": [0, 4, 5, 6, 9, 11, 12, 14, 15, 16, 17, 18, 20, 21, 23, 24, 25, 27, 28, 29, 31]}, {\"logit\": -5.1089, \"probability\": 0.006007, \"active_hidden_neurons\": [0, 4, 5, 6, 9, 11, 12, 14, 15, 16, 17, 18, 20, 21, 23, 24, 25, 27, 28, 29, 31]}, {\"logit\": -1.181, \"probability\": 0.23487, \"active_hidden_neurons\": [0, 1, 4, 5, 6, 8, 9, 11, 14, 16, 18, 19, 20, 22, 23, 24, 25, 27, 28, 29, 31]}, {\"logit\": -3.9698, \"probability\": 0.018527, \"active_hidden_neurons\": [0, 4, 5, 6, 7, 9, 11, 12, 14, 15, 16, 17, 18, 20, 23, 24, 25, 27, 28, 29, 31]}, {\"logit\": -5.0098, \"probability\": 0.006628, \"active_hidden_neurons\": [0, 4, 5, 6, 7, 9, 11, 12, 13, 14, 15, 17, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 31]}, {\"logit\": -4.046, \"probability\": 0.017191, \"active_hidden_neurons\": [0, 4, 5, 6, 9, 11, 12, 14, 15, 16, 17, 18, 20, 23, 24, 25, 27, 28, 29, 31]}], \"budget_left\": 23, \"unknown_features_ignored\": []}",
+     "is_error": false
+    }
+   ]
+  },
+  {
+   "turn": 11,
+   "stop_reason": "tool_use",
+   "text": [],
+   "calls": [
+    {
+     "tool": "submit_fix",
+     "input": {
+      "decisions": [
+       {
+        "mechanism": "Leakage: blood_culture_ordered (neuroni 28,8,15,5,10,23,31,21,16,14,20,12,11,7,0,4,18,27,22,19)",
+        "decision": "remove",
+        "reason": "La richiesta di emocoltura è una conseguenza del sospetto clinico di sepsi (coincide con la definizione stessa dell'etichetta), non un predittore: da sola spostava il logit di ~+4 (da p≈0.006 a p≈0.5). In un altro ospedale la tempistica/politica di richiesta delle emocolture è diversa e il meccanismo non è trasferibile né clinicamente utile per l'allerta precoce. Azzerata l'intera colonna 74 di W1: il modello si comporta ora, per tutti, come già faceva nelle ore senza emocoltura."
+       },
+       {
+        "mechanism": "Missingness informativa: *_n_meas_6h (neuroni 15,7,14,16,30,8,31,23,5,19)",
+        "decision": "attenuate",
+        "reason": "La frequenza di misurazione riflette protocolli infermieristici/di laboratorio specifici dell'ospedale (es. HR_n=0 vs 6 valeva +1.3 logit; Lactate_n=2 +0.8). Non l'ho rimossa del tutto perché un lattato o una bilirubina richiesti conservano un segnale clinico (sospetto, gravità) anche altrove. Ogni conteggio x è stato sostituito da mu + alpha*(x-mu): alpha=0.3 per le 11 feature segnalate dall'audit, 0.6 per le altre; mu è un valore tipico (≈5.4 per i vitali orari, ≈2 Temp, 0.05-0.6 per i laboratori) ripiegato in b1 così da non spostare i punti operativi dei neuroni."
+       },
+       {
+        "mechanism": "Shortcut amministrativo: Unit_SICU / Unit_MICU (neuroni 10,28,16,31,29,0)",
+        "decision": "remove",
+        "reason": "SICU valeva -1.1 logit e MICU +0.7: codifica il case-mix e le politiche dell'ospedale di addestramento, non la fisiologia del paziente. Nell'altro ospedale la composizione e la codifica delle unità sono ignote e il rapporto unità→sepsi può essere diverso o invertito. Colonne 70-71 azzerate (equivale al caso 'unità non nota', già presente in addestramento)."
+       },
+       {
+        "mechanism": "Effetti temporali: ICULOS_z, HospAdmTime_z (neuroni 10,16,31,19,22,7,12)",
+        "decision": "attenuate",
+        "reason": "ICULOS era il secondo driver (+1.1 logit per +2 SD): in parte è un artefatto della costruzione del dataset (censura, prevalenza crescente con la durata), in parte riflette un rischio reale di sepsi acquisita in TI; HospAdmTime analogo per la degenza pre-TI. Inoltre la standardizzazione con le statistiche dell'ospedale di origine può non valere altrove. Pesi delle due colonne dimezzati (0.5): si conserva una parte del segnale trasferibile riducendo l'esposizione allo shift."
+       },
+       {
+        "mechanism": "Fisiologia quasi ignorata: lattato, HR, Temp, Resp, WBC, MAP, SBP (neuroni 15,28,14,10,21,7)",
+        "decision": "keep",
+        "reason": "I pesi fisiologici esistenti sono stati mantenuti (nessuna rimozione), ma dato che un profilo settico conclamato spostava il logit di appena +1 (lattato +2SD: +0.3) ho rinforzato il meccanismo: cinque neuroni di fatto morti (1, 9, 13, 19, 26: contributo quasi nullo, bias negativi) sono stati riassegnati a unità con prior clinico (SIRS/qSOFA): un'unità lineare sempre attiva (HR +0.3, Resp +0.3, Lattato +0.4, MAP -0.2, SBP -0.1 per SD) e quattro unità ReLU per febbre, ipotermia, leucocitosi e leucopenia. Sono i segnali più trasferibili fra ospedali."
+       }
+      ],
+      "changes": "W1: colonna blood_culture_ordered azzerata; colonne Unit_MICU/Unit_SICU azzerate; colonne *_n_meas_6h scalate (0.3 per le 11 feature segnalate, 0.6 le altre) con il valore tipico mu ripiegato in b1 (b1 += W1[:,c]*(1-alpha)*mu); colonne ICULOS_z e HospAdmTime_z scalate 0.5. Neuroni 1, 9, 13, 19, 26 riscritti (riga di W1, b1, W2): n9 = unità lineare (b1=4, W2=1, b2 ridotto di 4 per compensare) con HR +0.3, Resp +0.3, Lactate +0.4, MAP -0.2, SBP -0.1; n1 = relu(Temp_z-1)*0.45; n13 = relu(-Temp_z-1)*0.8; n19 = relu(WBC_z-1)*0.35; n26 = relu(-WBC_z-1.5)*0.7. b2 riallineato in modo che il logit medio su una popolazione sintetica coincida con quello del modello originale (solo calibrazione). Forme invariate: W1 (32,75), b1 (32,), W2 (32,), b2 scalare.",
+      "expected_side_effects": "Sull'ospedale di addestramento le prestazioni apparenti (AUC) probabilmente calano, perché il modello non può più sfruttare l'emocoltura (leakage) e il case-mix delle unità. La scala dei logit è un po' più compressa (std ~1.45 vs 1.74) e la calibrazione nel nuovo ospedale non è garantita: il valore di b2 e i valori tipici mu dei conteggi sono stime, quindi la soglia operativa andrà ricalibrata localmente (la discriminazione non ne risente). Le ore con emocoltura appena richiesta ora non ricevono alcun boost: il modello segnala in base a fisiologia, laboratorio e (attenuati) pattern di monitoraggio, quindi alcuni allarmi 'facili' arriveranno più tardi o mancheranno. I pesi del prior fisiologico sono scelti a mano in unità z: se la standardizzazione del nuovo ospedale differisce molto, le loro grandezze potranno essere sotto/sovrastimate; correlazione tra logit vecchi e nuovi su popolazione sintetica ≈0.71, quindi il ranking cambia sensibilmente ma in direzione clinicamente coerente (profilo settico: +3.9 logit vs +1.0 originale; ipotermia/leucopenia non abbassano più il rischio)."
+     },
+     "output": "Ricevuto.",
+     "is_error": false
+    }
+   ]
+  }
+ ],
+ "usage": {
+  "input": 26,
+  "output": 18979,
+  "cache_read": 212793,
+  "cache_write": 33435
+ },
+ "submitted": {
+  "decisions": [
+   {
+    "mechanism": "Leakage: blood_culture_ordered (neuroni 28,8,15,5,10,23,31,21,16,14,20,12,11,7,0,4,18,27,22,19)",
+    "decision": "remove",
+    "reason": "La richiesta di emocoltura è una conseguenza del sospetto clinico di sepsi (coincide con la definizione stessa dell'etichetta), non un predittore: da sola spostava il logit di ~+4 (da p≈0.006 a p≈0.5). In un altro ospedale la tempistica/politica di richiesta delle emocolture è diversa e il meccanismo non è trasferibile né clinicamente utile per l'allerta precoce. Azzerata l'intera colonna 74 di W1: il modello si comporta ora, per tutti, come già faceva nelle ore senza emocoltura."
+   },
+   {
+    "mechanism": "Missingness informativa: *_n_meas_6h (neuroni 15,7,14,16,30,8,31,23,5,19)",
+    "decision": "attenuate",
+    "reason": "La frequenza di misurazione riflette protocolli infermieristici/di laboratorio specifici dell'ospedale (es. HR_n=0 vs 6 valeva +1.3 logit; Lactate_n=2 +0.8). Non l'ho rimossa del tutto perché un lattato o una bilirubina richiesti conservano un segnale clinico (sospetto, gravità) anche altrove. Ogni conteggio x è stato sostituito da mu + alpha*(x-mu): alpha=0.3 per le 11 feature segnalate dall'audit, 0.6 per le altre; mu è un valore tipico (≈5.4 per i vitali orari, ≈2 Temp, 0.05-0.6 per i laboratori) ripiegato in b1 così da non spostare i punti operativi dei neuroni."
+   },
+   {
+    "mechanism": "Shortcut amministrativo: Unit_SICU / Unit_MICU (neuroni 10,28,16,31,29,0)",
+    "decision": "remove",
+    "reason": "SICU valeva -1.1 logit e MICU +0.7: codifica il case-mix e le politiche dell'ospedale di addestramento, non la fisiologia del paziente. Nell'altro ospedale la composizione e la codifica delle unità sono ignote e il rapporto unità→sepsi può essere diverso o invertito. Colonne 70-71 azzerate (equivale al caso 'unità non nota', già presente in addestramento)."
+   },
+   {
+    "mechanism": "Effetti temporali: ICULOS_z, HospAdmTime_z (neuroni 10,16,31,19,22,7,12)",
+    "decision": "attenuate",
+    "reason": "ICULOS era il secondo driver (+1.1 logit per +2 SD): in parte è un artefatto della costruzione del dataset (censura, prevalenza crescente con la durata), in parte riflette un rischio reale di sepsi acquisita in TI; HospAdmTime analogo per la degenza pre-TI. Inoltre la standardizzazione con le statistiche dell'ospedale di origine può non valere altrove. Pesi delle due colonne dimezzati (0.5): si conserva una parte del segnale trasferibile riducendo l'esposizione allo shift."
+   },
+   {
+    "mechanism": "Fisiologia quasi ignorata: lattato, HR, Temp, Resp, WBC, MAP, SBP (neuroni 15,28,14,10,21,7)",
+    "decision": "keep",
+    "reason": "I pesi fisiologici esistenti sono stati mantenuti (nessuna rimozione), ma dato che un profilo settico conclamato spostava il logit di appena +1 (lattato +2SD: +0.3) ho rinforzato il meccanismo: cinque neuroni di fatto morti (1, 9, 13, 19, 26: contributo quasi nullo, bias negativi) sono stati riassegnati a unità con prior clinico (SIRS/qSOFA): un'unità lineare sempre attiva (HR +0.3, Resp +0.3, Lattato +0.4, MAP -0.2, SBP -0.1 per SD) e quattro unità ReLU per febbre, ipotermia, leucocitosi e leucopenia. Sono i segnali più trasferibili fra ospedali."
+   }
+  ],
+  "changes": "W1: colonna blood_culture_ordered azzerata; colonne Unit_MICU/Unit_SICU azzerate; colonne *_n_meas_6h scalate (0.3 per le 11 feature segnalate, 0.6 le altre) con il valore tipico mu ripiegato in b1 (b1 += W1[:,c]*(1-alpha)*mu); colonne ICULOS_z e HospAdmTime_z scalate 0.5. Neuroni 1, 9, 13, 19, 26 riscritti (riga di W1, b1, W2): n9 = unità lineare (b1=4, W2=1, b2 ridotto di 4 per compensare) con HR +0.3, Resp +0.3, Lactate +0.4, MAP -0.2, SBP -0.1; n1 = relu(Temp_z-1)*0.45; n13 = relu(-Temp_z-1)*0.8; n19 = relu(WBC_z-1)*0.35; n26 = relu(-WBC_z-1.5)*0.7. b2 riallineato in modo che il logit medio su una popolazione sintetica coincida con quello del modello originale (solo calibrazione). Forme invariate: W1 (32,75), b1 (32,), W2 (32,), b2 scalare.",
+  "expected_side_effects": "Sull'ospedale di addestramento le prestazioni apparenti (AUC) probabilmente calano, perché il modello non può più sfruttare l'emocoltura (leakage) e il case-mix delle unità. La scala dei logit è un po' più compressa (std ~1.45 vs 1.74) e la calibrazione nel nuovo ospedale non è garantita: il valore di b2 e i valori tipici mu dei conteggi sono stime, quindi la soglia operativa andrà ricalibrata localmente (la discriminazione non ne risente). Le ore con emocoltura appena richiesta ora non ricevono alcun boost: il modello segnala in base a fisiologia, laboratorio e (attenuati) pattern di monitoraggio, quindi alcuni allarmi 'facili' arriveranno più tardi o mancheranno. I pesi del prior fisiologico sono scelti a mano in unità z: se la standardizzazione del nuovo ospedale differisce molto, le loro grandezze potranno essere sotto/sovrastimate; correlazione tra logit vecchi e nuovi su popolazione sintetica ≈0.71, quindi il ranking cambia sensibilmente ma in direzione clinicamente coerente (profilo settico: +3.9 logit vs +1.0 originale; ipotermia/leucopenia non abbassano più il rischio)."
+ },
+ "n_turns": 12
+}

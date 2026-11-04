@@ -52,7 +52,7 @@ Modifica i pesi per eliminare la dipendenza del modello da ciascuno di questi me
     return system, user
 
 
-def run_one(cond, rep, hyps, budget, client):
+def run_one(cond, rep, hyps, budget, client, prompt_fn=None, submit=None, tag="", model=None, runs_dir=None):
     ctx_w0 = Ctx.cached.w0
     feats = Ctx.cached.feats
     sb = make_sandbox(ctx_w0, feats)
@@ -80,11 +80,12 @@ def run_one(cond, rep, hyps, budget, client):
         res, unknown = forward(current_w(), feats, rows)
         return json.dumps({"results": res, "budget_left": budget - used["n"], "unknown_features_ignored": unknown}), False
 
-    system, user = prompt(hyps, len(feats), budget)
-    tools = [PYTHON_TOOL, forward_tool(budget), SUBMIT]
+    system, user = (prompt_fn or prompt)(hyps, len(feats), budget)
+    tools = [PYTHON_TOOL, forward_tool(budget), submit or SUBMIT]
+    extra = {"model": model} if model else {}
     try:
         sub, log = run_agent(client, system, user, tools, {"python": h_python, "forward_pass": h_forward},
-                             "submit_fix", RUNS / f"{cond}_rep{rep}.json")
+                             "submit_fix", (runs_dir or RUNS) / f"{tag}{cond}_rep{rep}.json", **extra)
         p = sb / "model_fixed.npz"
         w1 = None
         if p.exists():
@@ -94,10 +95,10 @@ def run_one(cond, rep, hyps, budget, client):
             if not ok:
                 w1 = None
             else:
-                np.savez(MODELS / f"llm_fixed_{cond}_rep{rep}.npz", **w1)
+                np.savez(MODELS / f"llm_fixed_{tag}{cond}_rep{rep}.npz", **w1)
     finally:
         cleanup(sb)
-    print(f"fix {cond} rep{rep}: turni {log['n_turns']}, forward {used['n']}, pesi {'OK' if w1 else 'MANCANTI'}", flush=True)
+    print(f"fix {tag}{cond} rep{rep}: turni {log['n_turns']}, forward {used['n']}, pesi {'OK' if w1 else 'MANCANTI'}", flush=True)
     return {"cond": cond, "rep": rep, "hypotheses": hyps, "submitted": sub, "forward_used": used["n"],
             "n_turns": log["n_turns"], "usage": log["usage"], "w": w1}
 
