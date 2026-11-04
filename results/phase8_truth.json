@@ -1,0 +1,298 @@
+{
+ "0.7": {
+  "flag_rate_A_label1": 0.6982376575469971,
+  "flag_rate_A_label0": 0.04984225332736969,
+  "flag_alone_auroc_A": 0.822650546441741,
+  "model": {
+   "A_test": {
+    "auroc": 0.9075721014622172,
+    "auprc": 0.38927322396398417,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.6627193283923952,
+    "auprc": 0.028807033271873353,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 3.876012392791782,
+    "counts_abs_dlogit_to_median": 0.6302194696970217,
+    "ICULOS_abs_dlogit_to_median": 0.38933217313523716,
+    "ICULOS_slope_168h_minus_24h": 2.8514574161913298,
+    "HospAdmTime_abs_dlogit_to_median": 0.12491915177056084,
+    "Unit_SICU_abs_dlogit_to_median": 0.2975954525043056,
+    "physiology_last_abs_dlogit_to_median": 0.6675258625592702
+   }
+  },
+  "after_zero_flag": {
+   "A_test": {
+    "auroc": 0.7627511212750394,
+    "auprc": 0.08922962502019083,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.6887768451472251,
+    "auprc": 0.048834076826976686,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 0.0,
+    "counts_abs_dlogit_to_median": 0.634882611849424,
+    "ICULOS_abs_dlogit_to_median": 0.39277752543311334,
+    "ICULOS_slope_168h_minus_24h": 2.8788600670428313,
+    "HospAdmTime_abs_dlogit_to_median": 0.12705007486852493,
+    "Unit_SICU_abs_dlogit_to_median": 0.3014649025162068,
+    "physiology_last_abs_dlogit_to_median": 0.6671358291752094
+   }
+  },
+  "flag_paired_effect": 3.876012392791782,
+  "flag_W1_col_L1_rank": 1,
+  "flag_W2W1_rank": 1,
+  "shap": {
+   "A_test": {
+    "rank": 1,
+    "mean_abs": 0.43573176192210006,
+    "top5": [
+     "blood_culture_ordered",
+     "Unit_SICU",
+     "ICULOS_z",
+     "HR_n_meas_6h",
+     "SBP_n_meas_6h"
+    ]
+   },
+   "B_test": {
+    "rank": 1,
+    "mean_abs": 0.5816712231974728,
+    "top5": [
+     "blood_culture_ordered",
+     "Unit_SICU",
+     "ICULOS_z",
+     "HR_n_meas_6h",
+     "Temp_last_z"
+    ]
+   }
+  }
+ },
+ "0.4": {
+  "flag_rate_A_label1": 0.39740896224975586,
+  "flag_rate_A_label0": 0.04984225332736969,
+  "flag_alone_auroc_A": 0.6681553471400243,
+  "model": {
+   "A_test": {
+    "auroc": 0.8302750247979824,
+    "auprc": 0.18960378376797368,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.6892348670355015,
+    "auprc": 0.03834812267693351,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 2.663731682390934,
+    "counts_abs_dlogit_to_median": 0.6680935548619076,
+    "ICULOS_abs_dlogit_to_median": 0.4407768036445147,
+    "ICULOS_slope_168h_minus_24h": 2.9560440854109777,
+    "HospAdmTime_abs_dlogit_to_median": 0.11261095008488292,
+    "Unit_SICU_abs_dlogit_to_median": 0.29004877796053274,
+    "physiology_last_abs_dlogit_to_median": 0.6358929332030475
+   }
+  },
+  "after_zero_flag": {
+   "A_test": {
+    "auroc": 0.7673433279436471,
+    "auprc": 0.08959974276981751,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.7090158968445145,
+    "auprc": 0.05567905780934461,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 0.0,
+    "counts_abs_dlogit_to_median": 0.676066783486261,
+    "ICULOS_abs_dlogit_to_median": 0.44680161493148723,
+    "ICULOS_slope_168h_minus_24h": 3.000196609813614,
+    "HospAdmTime_abs_dlogit_to_median": 0.11425224999691287,
+    "Unit_SICU_abs_dlogit_to_median": 0.29305426323873346,
+    "physiology_last_abs_dlogit_to_median": 0.636094390315186
+   }
+  },
+  "flag_paired_effect": 2.663731682390934,
+  "flag_W1_col_L1_rank": 1,
+  "flag_W2W1_rank": 1,
+  "shap": {
+   "A_test": {
+    "rank": 4,
+    "mean_abs": 0.2740543333218504,
+    "top5": [
+     "ICULOS_z",
+     "Unit_SICU",
+     "FiO2_n_meas_6h",
+     "blood_culture_ordered",
+     "HR_n_meas_6h"
+    ]
+   },
+   "B_test": {
+    "rank": 3,
+    "mean_abs": 0.38466858102428264,
+    "top5": [
+     "ICULOS_z",
+     "Unit_SICU",
+     "blood_culture_ordered",
+     "HR_n_meas_6h",
+     "SBP_n_meas_6h"
+    ]
+   }
+  }
+ },
+ "0.2": {
+  "flag_rate_A_label1": 0.1984127014875412,
+  "flag_rate_A_label0": 0.04984225332736969,
+  "flag_alone_auroc_A": 0.5706866244167191,
+  "model": {
+   "A_test": {
+    "auroc": 0.7868854167653788,
+    "auprc": 0.10574929807490997,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.7115668894066318,
+    "auprc": 0.05361514432508765,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 1.6051684159726678,
+    "counts_abs_dlogit_to_median": 0.6341837784912429,
+    "ICULOS_abs_dlogit_to_median": 0.4575459340305976,
+    "ICULOS_slope_168h_minus_24h": 2.908843568733241,
+    "HospAdmTime_abs_dlogit_to_median": 0.1044074511273171,
+    "Unit_SICU_abs_dlogit_to_median": 0.2671598941400601,
+    "physiology_last_abs_dlogit_to_median": 0.6822850076064315
+   }
+  },
+  "after_zero_flag": {
+   "A_test": {
+    "auroc": 0.7681068858987035,
+    "auprc": 0.08758283875585604,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.7208806074913124,
+    "auprc": 0.06087425802038979,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 0.0,
+    "counts_abs_dlogit_to_median": 0.6392120224224045,
+    "ICULOS_abs_dlogit_to_median": 0.4610659726165402,
+    "ICULOS_slope_168h_minus_24h": 2.934584027522325,
+    "HospAdmTime_abs_dlogit_to_median": 0.10558068330296573,
+    "Unit_SICU_abs_dlogit_to_median": 0.2690826911946324,
+    "physiology_last_abs_dlogit_to_median": 0.6831149706544728
+   }
+  },
+  "flag_paired_effect": 1.6051684159726678,
+  "flag_W1_col_L1_rank": 1,
+  "flag_W2W1_rank": 1,
+  "shap": {
+   "A_test": {
+    "rank": 14,
+    "mean_abs": 0.15319817560703872,
+    "top5": [
+     "ICULOS_z",
+     "Unit_SICU",
+     "FiO2_n_meas_6h",
+     "HR_n_meas_6h",
+     "SBP_n_meas_6h"
+    ]
+   },
+   "B_test": {
+    "rank": 5,
+    "mean_abs": 0.22437912149099498,
+    "top5": [
+     "ICULOS_z",
+     "Unit_SICU",
+     "HR_n_meas_6h",
+     "Temp_last_z",
+     "blood_culture_ordered"
+    ]
+   }
+  }
+ },
+ "0.12": {
+  "flag_rate_A_label1": 0.11659663915634155,
+  "flag_rate_A_label0": 0.04984225332736969,
+  "flag_alone_auroc_A": 0.5292260483329251,
+  "model": {
+   "A_test": {
+    "auroc": 0.7761834225648487,
+    "auprc": 0.09180766000618411,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.7193541582611431,
+    "auprc": 0.059753977223432446,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 0.985690567505092,
+    "counts_abs_dlogit_to_median": 0.6423039180425788,
+    "ICULOS_abs_dlogit_to_median": 0.4693816193482534,
+    "ICULOS_slope_168h_minus_24h": 2.972951113858757,
+    "HospAdmTime_abs_dlogit_to_median": 0.10350408389066078,
+    "Unit_SICU_abs_dlogit_to_median": 0.2626562927496098,
+    "physiology_last_abs_dlogit_to_median": 0.6868599584961173
+   }
+  },
+  "after_zero_flag": {
+   "A_test": {
+    "auroc": 0.7714593670936105,
+    "auprc": 0.08876038334940421,
+    "prevalence": 0.021868597533817747
+   },
+   "B_test": {
+    "auroc": 0.7228960093924279,
+    "auprc": 0.06166946142672951,
+    "prevalence": 0.014147074455869133
+   },
+   "dep": {
+    "bc_paired_do1_minus_do0": 0.0,
+    "counts_abs_dlogit_to_median": 0.6455380705636312,
+    "ICULOS_abs_dlogit_to_median": 0.47171526433323757,
+    "ICULOS_slope_168h_minus_24h": 2.991682737737766,
+    "HospAdmTime_abs_dlogit_to_median": 0.10413927293402483,
+    "Unit_SICU_abs_dlogit_to_median": 0.26371002021309503,
+    "physiology_last_abs_dlogit_to_median": 0.6875867893629676
+   }
+  },
+  "flag_paired_effect": 0.985690567505092,
+  "flag_W1_col_L1_rank": 1,
+  "flag_W2W1_rank": 3,
+  "shap": {
+   "A_test": {
+    "rank": 27,
+    "mean_abs": 0.09141658288835278,
+    "top5": [
+     "ICULOS_z",
+     "Unit_SICU",
+     "FiO2_n_meas_6h",
+     "HR_n_meas_6h",
+     "SBP_n_meas_6h"
+    ]
+   },
+   "B_test": {
+    "rank": 17,
+    "mean_abs": 0.13553493262955368,
+    "top5": [
+     "ICULOS_z",
+     "Unit_SICU",
+     "HR_n_meas_6h",
+     "Temp_last_z",
+     "SBP_n_meas_6h"
+    ]
+   }
+  }
+ }
+}
