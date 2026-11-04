@@ -1,0 +1,9 @@
+[project]
+name = "sepsis-weight-audit"
+version = "0.1.0"
+requires-python = ">=3.11,<3.14"
+dependencies = ["numpy", "pandas", "torch", "scikit-learn", "shap", "anthropic", "pyarrow"]
+
+[tool.uv]
+package = false
+

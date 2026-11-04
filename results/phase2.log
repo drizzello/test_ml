@@ -1,0 +1,18 @@
+with_bc seed0 ep6 103s  A_test AUROC 0.9076 AUPRC 0.3893 | B AUROC 0.6627 AUPRC 0.0288
+with_bc seed1 ep4 9s  A_test AUROC 0.9099 AUPRC 0.3947 | B AUROC 0.7038 AUPRC 0.0341
+with_bc seed2 ep5 10s  A_test AUROC 0.9098 AUPRC 0.3908 | B AUROC 0.7085 AUPRC 0.0346
+no_bc seed0 ep5 95s  A_test AUROC 0.7689 AUPRC 0.0902 | B AUROC 0.7099 AUPRC 0.0559
+no_bc seed1 ep3 9s  A_test AUROC 0.7663 AUPRC 0.0942 | B AUROC 0.7346 AUPRC 0.0595
+no_bc seed2 ep4 8s  A_test AUROC 0.7699 AUPRC 0.0937 | B AUROC 0.7276 AUPRC 0.0562
+no_bc_no_counts seed0 ep3 7s  A_test AUROC 0.7335 AUPRC 0.0770 | B AUROC 0.6970 AUPRC 0.0521
+no_bc_no_counts seed1 ep3 7s  A_test AUROC 0.7420 AUPRC 0.0854 | B AUROC 0.6917 AUPRC 0.0527
+no_bc_no_counts seed2 ep9 11s  A_test AUROC 0.7422 AUPRC 0.0807 | B AUROC 0.7051 AUPRC 0.0580
+no_bc_no_time seed0 ep5 9s  A_test AUROC 0.7388 AUPRC 0.0671 | B AUROC 0.6985 AUPRC 0.0444
+no_bc_no_time seed1 ep3 8s  A_test AUROC 0.7387 AUPRC 0.0656 | B AUROC 0.6995 AUPRC 0.0426
+no_bc_no_time seed2 ep12 13s  A_test AUROC 0.7348 AUPRC 0.0612 | B AUROC 0.6619 AUPRC 0.0414
+| variante | n input | A-test AUROC | A-test AUPRC | B AUROC | B AUPRC | A-test AUROC (media±sd 3 seed) | B AUROC (media±sd) | A-test AUPRC (media±sd) | B AUPRC (media±sd) |
+|---|---|---|---|---|---|---|---|---|---|
+| with_bc | 75 | 0.9076 [0.900–0.916] | 0.3893 [0.360–0.420] | 0.6627 [0.651–0.674] | 0.0288 [0.027–0.031] | 0.9091±0.0011 | 0.6917±0.0206 | 0.3916±0.0023 | 0.0325±0.0026 |
+| no_bc | 74 | 0.7689 [0.750–0.786] | 0.0902 [0.076–0.106] | 0.7099 [0.696–0.723] | 0.0559 [0.050–0.063] | 0.7684±0.0015 | 0.7240±0.0104 | 0.0927±0.0018 | 0.0572±0.0016 |
+| no_bc_no_counts | 40 | 0.7335 | 0.0770 | 0.6970 | 0.0521 | 0.7392±0.0041 | 0.6979±0.0055 | 0.0810±0.0034 | 0.0543±0.0026 |
+| no_bc_no_time | 72 | 0.7388 | 0.0671 | 0.6985 | 0.0444 | 0.7374±0.0019 | 0.6866±0.0175 | 0.0646±0.0025 | 0.0428±0.0012 |

@@ -1,0 +1,77 @@
+{
+ "variant": "no_bc_no_counts",
+ "seed": 2,
+ "feature_names": [
+  "HR_last_z",
+  "O2Sat_last_z",
+  "Temp_last_z",
+  "SBP_last_z",
+  "MAP_last_z",
+  "DBP_last_z",
+  "Resp_last_z",
+  "EtCO2_last_z",
+  "BaseExcess_last_z",
+  "HCO3_last_z",
+  "FiO2_last_z",
+  "pH_last_z",
+  "PaCO2_last_z",
+  "SaO2_last_z",
+  "AST_last_z",
+  "BUN_last_z",
+  "Alkalinephos_last_z",
+  "Calcium_last_z",
+  "Chloride_last_z",
+  "Creatinine_last_z",
+  "Bilirubin_direct_last_z",
+  "Glucose_last_z",
+  "Lactate_last_z",
+  "Magnesium_last_z",
+  "Phosphate_last_z",
+  "Potassium_last_z",
+  "Bilirubin_total_last_z",
+  "TroponinI_last_z",
+  "Hct_last_z",
+  "Hgb_last_z",
+  "PTT_last_z",
+  "WBC_last_z",
+  "Fibrinogen_last_z",
+  "Platelets_last_z",
+  "Age_z",
+  "Gender_male",
+  "Unit_MICU",
+  "Unit_SICU",
+  "HospAdmTime_z",
+  "ICULOS_z"
+ ],
+ "train": {
+  "best_epoch": 9,
+  "epochs_run": 15,
+  "n_params": 1345,
+  "A_val": {
+   "auroc": 0.7432447110732606,
+   "auprc": 0.07604622798166293,
+   "prevalence": 0.02150463239595192
+  },
+  "A_test": {
+   "auroc": 0.7422467213875016,
+   "auprc": 0.08068573036315535,
+   "prevalence": 0.021868597533817747
+  },
+  "B_test": {
+   "auroc": 0.7050588448074663,
+   "auprc": 0.057966944281734906,
+   "prevalence": 0.014147074455869133
+  }
+ },
+ "config": {
+  "hidden": 32,
+  "optimizer": "Adam",
+  "lr": 0.001,
+  "weight_decay": 0.0,
+  "batch_size": 1024,
+  "max_epochs": 40,
+  "patience": 5,
+  "early_stopping_metric": "AUPRC su A_val",
+  "loss": "BCE (senza pesi di classe)"
+ }
+}

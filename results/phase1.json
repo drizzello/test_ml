@@ -1,0 +1,304 @@
+{
+ "summary": [
+  {
+   "gruppo": "A (tutto)",
+   "pazienti": 20336,
+   "ore": 790215,
+   "prevalenza_ore_%": 2.17,
+   "pazienti_con_sepsi": 1790,
+   "prevalenza_pazienti_%": 8.8,
+   "ore_degenza_mediana": 39.0,
+   "bc_%_ore_label1": 69.80000305175781,
+   "bc_%_ore_label0": 5.0
+  },
+  {
+   "gruppo": "A_train",
+   "pazienti": 12201,
+   "ore": 474060,
+   "prevalenza_ore_%": 2.17,
+   "pazienti_con_sepsi": 1074,
+   "prevalenza_pazienti_%": 8.8,
+   "ore_degenza_mediana": 39.0,
+   "bc_%_ore_label1": 69.80000305175781,
+   "bc_%_ore_label0": 5.0
+  },
+  {
+   "gruppo": "A_val",
+   "pazienti": 4067,
+   "ore": 158989,
+   "prevalenza_ore_%": 2.15,
+   "pazienti_con_sepsi": 358,
+   "prevalenza_pazienti_%": 8.8,
+   "ore_degenza_mediana": 39.0,
+   "bc_%_ore_label1": 70.4000015258789,
+   "bc_%_ore_label0": 5.0
+  },
+  {
+   "gruppo": "A_test",
+   "pazienti": 4068,
+   "ore": 157166,
+   "prevalenza_ore_%": 2.19,
+   "pazienti_con_sepsi": 358,
+   "prevalenza_pazienti_%": 8.8,
+   "ore_degenza_mediana": 38.0,
+   "bc_%_ore_label1": 69.4000015258789,
+   "bc_%_ore_label0": 4.900000095367432
+  },
+  {
+   "gruppo": "B (test esterno)",
+   "pazienti": 20000,
+   "ore": 761995,
+   "prevalenza_ore_%": 1.41,
+   "pazienti_con_sepsi": 1142,
+   "prevalenza_pazienti_%": 5.71,
+   "ore_degenza_mediana": 38.0,
+   "bc_%_ore_label1": 10.699999809265137,
+   "bc_%_ore_label0": 10.0
+  }
+ ],
+ "temporal_check": {
+  "A": {
+   "auroc_ICULOS_da_solo": 0.6414068805075682,
+   "auroc_HospAdmTime_da_solo": 0.5012798330903667,
+   "prevalenza_%_per_ICULOS": {
+    "(0, 6]": 1.57,
+    "(6, 12]": 1.97,
+    "(12, 24]": 1.36,
+    "(24, 48]": 1.18,
+    "(48, 96]": 7.47,
+    "(96, 168]": 13.58,
+    "(168, 10000]": 15.47
+   },
+   "frazione_ore_per_ICULOS_%": {
+    "(0, 6]": 13.31,
+    "(6, 12]": 15.23,
+    "(12, 24]": 28.0,
+    "(24, 48]": 34.36,
+    "(48, 96]": 6.2,
+    "(96, 168]": 2.02,
+    "(168, 10000]": 0.87
+   },
+   "sepsi_ICULOS_prima_ora_label1_mediana": 29.5,
+   "sepsi_ore_label1_per_paziente_mediana": 10.0,
+   "sepsi_%_pazienti_label1_dalla_prima_ora": 11.3,
+   "LOS_mediana_settici": 38.0,
+   "LOS_mediana_non_settici": 39.0,
+   "LOS_quantili_10_50_90_99_non_settici": [
+    19.0,
+    39.0,
+    53.0,
+    59.0
+   ],
+   "%_pazienti_LOS>60h_non_settici": 0.0,
+   "LOS_quantili_10_50_90_99_settici": [
+    10.0,
+    38.0,
+    140.10000000000014,
+    254.2199999999998
+   ],
+   "%_pazienti_LOS>60h_settici": 34.9,
+   "%_ore_con_ICULOS>60": 5.13,
+   "P(paziente_settico | ICULOS>60)_%": 95.7,
+   "P(paziente_settico | ICULOS<=60)_%": 8.8,
+   "P(label=1 | ICULOS>60)_%": 14.16,
+   "P(label=1 | ICULOS<=60)_%": 1.52,
+   "%_ore_label1_con_ICULOS>60": 33.5,
+   "%_cartelle_che_iniziano_dopo_ICULOS_1": 36.9,
+   "HospAdmTime_mediana": -2.77,
+   "HospAdmTime_%_mancante": 0.0,
+   "Unit_%_mancante": 48.9,
+   "auroc_somma_conteggi_lab_da_sola": 0.5599987554510119,
+   "auroc_somma_conteggi_vitali_da_sola": 0.528601851417656
+  },
+  "B": {
+   "auroc_ICULOS_da_solo": 0.6279868314629004,
+   "auroc_HospAdmTime_da_solo": 0.546176535447331,
+   "prevalenza_%_per_ICULOS": {
+    "(0, 6]": 1.4,
+    "(6, 12]": 1.18,
+    "(12, 24]": 0.69,
+    "(24, 48]": 0.84,
+    "(48, 96]": 4.91,
+    "(96, 168]": 8.33,
+    "(168, 10000]": 9.31
+   },
+   "frazione_ore_per_ICULOS_%": {
+    "(0, 6]": 15.41,
+    "(6, 12]": 15.55,
+    "(12, 24]": 27.46,
+    "(24, 48]": 32.73,
+    "(48, 96]": 5.77,
+    "(96, 168]": 2.01,
+    "(168, 10000]": 1.06
+   },
+   "sepsi_ICULOS_prima_ora_label1_mediana": 28.5,
+   "sepsi_ore_label1_per_paziente_mediana": 10.0,
+   "sepsi_%_pazienti_label1_dalla_prima_ora": 19.5,
+   "LOS_mediana_settici": 37.0,
+   "LOS_mediana_non_settici": 38.0,
+   "LOS_quantili_10_50_90_99_non_settici": [
+    18.0,
+    38.0,
+    54.0,
+    66.0
+   ],
+   "%_pazienti_LOS>60h_non_settici": 1.2,
+   "LOS_quantili_10_50_90_99_settici": [
+    8.0,
+    37.0,
+    144.0,
+    272.76999999999975
+   ],
+   "%_pazienti_LOS>60h_settici": 33.5,
+   "%_ore_con_ICULOS>60": 5.27,
+   "P(paziente_settico | ICULOS>60)_%": 65.0,
+   "P(paziente_settico | ICULOS<=60)_%": 5.7,
+   "P(label=1 | ICULOS>60)_%": 8.58,
+   "P(label=1 | ICULOS<=60)_%": 1.02,
+   "%_ore_label1_con_ICULOS>60": 32.0,
+   "%_cartelle_che_iniziano_dopo_ICULOS_1": 6.5,
+   "HospAdmTime_mediana": -8.57,
+   "HospAdmTime_%_mancante": 0.0,
+   "Unit_%_mancante": 29.6,
+   "auroc_somma_conteggi_lab_da_sola": 0.6455610031723871,
+   "auroc_somma_conteggi_vitali_da_sola": 0.5644894808443717
+  }
+ },
+ "quantili_1_50_99": {
+  "FiO2": {
+   "A": [
+    0.3,
+    0.5,
+    1.0
+   ],
+   "B": [
+    0.21,
+    0.4,
+    1.0
+   ]
+  },
+  "Temp": {
+   "A": [
+    35.11,
+    37.06,
+    38.83
+   ],
+   "B": [
+    35.1,
+    36.9,
+    38.8
+   ]
+  },
+  "Lactate": {
+   "A": [
+    0.6,
+    1.8,
+    12.9
+   ],
+   "B": [
+    0.68,
+    1.97,
+    15.319799999999995
+   ]
+  },
+  "ICULOS": {
+   "A": [
+    1.0,
+    21.0,
+    161.0
+   ],
+   "B": [
+    1.0,
+    20.0,
+    172.0
+   ]
+  },
+  "HospAdmTime": {
+   "A": [
+    -682.94,
+    -2.6,
+    0.26
+   ],
+   "B": [
+    -587.53,
+    -8.95,
+    0.0
+   ]
+  }
+ },
+ "frazione_ore_con_misura": {
+  "A": {
+   "HR": 0.923,
+   "O2Sat": 0.88,
+   "Temp": 0.338,
+   "SBP": 0.848,
+   "MAP": 0.898,
+   "DBP": 0.519,
+   "Resp": 0.902,
+   "EtCO2": 0.0,
+   "BaseExcess": 0.104,
+   "HCO3": 0.081,
+   "FiO2": 0.142,
+   "pH": 0.115,
+   "PaCO2": 0.088,
+   "SaO2": 0.05,
+   "AST": 0.015,
+   "BUN": 0.082,
+   "Alkalinephos": 0.015,
+   "Calcium": 0.05,
+   "Chloride": 0.083,
+   "Creatinine": 0.066,
+   "Bilirubin_direct": 0.001,
+   "Glucose": 0.122,
+   "Lactate": 0.034,
+   "Magnesium": 0.078,
+   "Phosphate": 0.05,
+   "Potassium": 0.109,
+   "Bilirubin_total": 0.012,
+   "TroponinI": 0.001,
+   "Hct": 0.118,
+   "Hgb": 0.088,
+   "PTT": 0.048,
+   "WBC": 0.075,
+   "Fibrinogen": 0.008,
+   "Platelets": 0.065
+  },
+  "B": {
+   "HR": 0.879,
+   "O2Sat": 0.859,
+   "Temp": 0.339,
+   "SBP": 0.861,
+   "MAP": 0.852,
+   "DBP": 0.861,
+   "Resp": 0.789,
+   "EtCO2": 0.076,
+   "BaseExcess": 0.002,
+   "HCO3": 0.002,
+   "FiO2": 0.023,
+   "pH": 0.022,
+   "PaCO2": 0.022,
+   "SaO2": 0.019,
+   "AST": 0.018,
+   "BUN": 0.055,
+   "Alkalinephos": 0.018,
+   "Calcium": 0.068,
+   "Chloride": 0.006,
+   "Creatinine": 0.055,
+   "Bilirubin_direct": 0.002,
+   "Glucose": 0.222,
+   "Lactate": 0.019,
+   "Magnesium": 0.048,
+   "Phosphate": 0.029,
+   "Potassium": 0.077,
+   "Bilirubin_total": 0.018,
+   "TroponinI": 0.018,
+   "Hct": 0.058,
+   "Hgb": 0.059,
+   "PTT": 0.01,
+   "WBC": 0.053,
+   "Fibrinogen": 0.006,
+   "Platelets": 0.053
+  }
+ },
+ "n_features": 75
+}

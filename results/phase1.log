@@ -1,0 +1,177 @@
+| gruppo | pazienti | ore | prev. ore % | pazienti con sepsi | prev. pazienti % | degenza mediana (h) | bc % ore label=1 | bc % ore label=0 |
+|---|---|---|---|---|---|---|---|---|
+| A (tutto) | 20336 | 790215 | 2.17 | 1790 | 8.8 | 39.0 | 69.8 | 5.0 |
+| A_train | 12201 | 474060 | 2.17 | 1074 | 8.8 | 39.0 | 69.8 | 5.0 |
+| A_val | 4067 | 158989 | 2.15 | 358 | 8.8 | 39.0 | 70.4 | 5.0 |
+| A_test | 4068 | 157166 | 2.19 | 358 | 8.8 | 38.0 | 69.4 | 4.9 |
+| B (test esterno) | 20000 | 761995 | 1.41 | 1142 | 5.71 | 38.0 | 10.7 | 10.0 |
+{
+ "A": {
+  "auroc_ICULOS_da_solo": 0.6414068805075682,
+  "auroc_HospAdmTime_da_solo": 0.5012798330903667,
+  "prevalenza_%_per_ICULOS": {
+   "(0, 6]": 1.57,
+   "(6, 12]": 1.97,
+   "(12, 24]": 1.36,
+   "(24, 48]": 1.18,
+   "(48, 96]": 7.47,
+   "(96, 168]": 13.58,
+   "(168, 10000]": 15.47
+  },
+  "frazione_ore_per_ICULOS_%": {
+   "(0, 6]": 13.31,
+   "(6, 12]": 15.23,
+   "(12, 24]": 28.0,
+   "(24, 48]": 34.36,
+   "(48, 96]": 6.2,
+   "(96, 168]": 2.02,
+   "(168, 10000]": 0.87
+  },
+  "sepsi_ICULOS_prima_ora_label1_mediana": 29.5,
+  "sepsi_ore_label1_per_paziente_mediana": 10.0,
+  "sepsi_%_pazienti_label1_dalla_prima_ora": 11.3,
+  "LOS_mediana_settici": 38.0,
+  "LOS_mediana_non_settici": 39.0,
+  "LOS_quantili_10_50_90_99_non_settici": [
+   19.0,
+   39.0,
+   53.0,
+   59.0
+  ],
+  "%_pazienti_LOS>60h_non_settici": 0.0,
+  "LOS_quantili_10_50_90_99_settici": [
+   10.0,
+   38.0,
+   140.10000000000014,
+   254.2199999999998
+  ],
+  "%_pazienti_LOS>60h_settici": 34.9,
+  "%_ore_con_ICULOS>60": 5.13,
+  "P(paziente_settico | ICULOS>60)_%": 95.7,
+  "P(paziente_settico | ICULOS<=60)_%": 8.8,
+  "P(label=1 | ICULOS>60)_%": 14.16,
+  "P(label=1 | ICULOS<=60)_%": 1.52,
+  "%_ore_label1_con_ICULOS>60": 33.5,
+  "%_cartelle_che_iniziano_dopo_ICULOS_1": 36.9,
+  "HospAdmTime_mediana": -2.77,
+  "HospAdmTime_%_mancante": 0.0,
+  "Unit_%_mancante": 48.9,
+  "auroc_somma_conteggi_lab_da_sola": 0.5599987554510119,
+  "auroc_somma_conteggi_vitali_da_sola": 0.528601851417656
+ },
+ "B": {
+  "auroc_ICULOS_da_solo": 0.6279868314629004,
+  "auroc_HospAdmTime_da_solo": 0.546176535447331,
+  "prevalenza_%_per_ICULOS": {
+   "(0, 6]": 1.4,
+   "(6, 12]": 1.18,
+   "(12, 24]": 0.69,
+   "(24, 48]": 0.84,
+   "(48, 96]": 4.91,
+   "(96, 168]": 8.33,
+   "(168, 10000]": 9.31
+  },
+  "frazione_ore_per_ICULOS_%": {
+   "(0, 6]": 15.41,
+   "(6, 12]": 15.55,
+   "(12, 24]": 27.46,
+   "(24, 48]": 32.73,
+   "(48, 96]": 5.77,
+   "(96, 168]": 2.01,
+   "(168, 10000]": 1.06
+  },
+  "sepsi_ICULOS_prima_ora_label1_mediana": 28.5,
+  "sepsi_ore_label1_per_paziente_mediana": 10.0,
+  "sepsi_%_pazienti_label1_dalla_prima_ora": 19.5,
+  "LOS_mediana_settici": 37.0,
+  "LOS_mediana_non_settici": 38.0,
+  "LOS_quantili_10_50_90_99_non_settici": [
+   18.0,
+   38.0,
+   54.0,
+   66.0
+  ],
+  "%_pazienti_LOS>60h_non_settici": 1.2,
+  "LOS_quantili_10_50_90_99_settici": [
+   8.0,
+   37.0,
+   144.0,
+   272.76999999999975
+  ],
+  "%_pazienti_LOS>60h_settici": 33.5,
+  "%_ore_con_ICULOS>60": 5.27,
+  "P(paziente_settico | ICULOS>60)_%": 65.0,
+  "P(paziente_settico | ICULOS<=60)_%": 5.7,
+  "P(label=1 | ICULOS>60)_%": 8.58,
+  "P(label=1 | ICULOS<=60)_%": 1.02,
+  "%_ore_label1_con_ICULOS>60": 32.0,
+  "%_cartelle_che_iniziano_dopo_ICULOS_1": 6.5,
+  "HospAdmTime_mediana": -8.57,
+  "HospAdmTime_%_mancante": 0.0,
+  "Unit_%_mancante": 29.6,
+  "auroc_somma_conteggi_lab_da_sola": 0.6455610031723871,
+  "auroc_somma_conteggi_vitali_da_sola": 0.5644894808443717
+ }
+}
+{
+ "FiO2": {
+  "A": [
+   0.3,
+   0.5,
+   1.0
+  ],
+  "B": [
+   0.21,
+   0.4,
+   1.0
+  ]
+ },
+ "Temp": {
+  "A": [
+   35.11,
+   37.06,
+   38.83
+  ],
+  "B": [
+   35.1,
+   36.9,
+   38.8
+  ]
+ },
+ "Lactate": {
+  "A": [
+   0.6,
+   1.8,
+   12.9
+  ],
+  "B": [
+   0.68,
+   1.97,
+   15.319799999999995
+  ]
+ },
+ "ICULOS": {
+  "A": [
+   1.0,
+   21.0,
+   161.0
+  ],
+  "B": [
+   1.0,
+   20.0,
+   172.0
+  ]
+ },
+ "HospAdmTime": {
+  "A": [
+   -682.94,
+   -2.6,
+   0.26
+  ],
+  "B": [
+   -587.53,
+   -8.95,
+   0.0
+  ]
+ }
+}
